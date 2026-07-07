@@ -25,19 +25,40 @@ function getSizeGroup(razmer) {
   return 'son';
 }
 
-// ===== AUTO SIZE GROUP (Razmer tanlanganda avto to'ldiriladi) =====
+// ===== AUTO: SizeGroup tanlansa → Razmer dropdown o'zgaradi =====
 function onEdit(e) {
   const sheet = e.source.getActiveSheet();
   const sheetName = sheet.getName();
   
-  // Faqat "Razmerlar rejasi" yoki "Таблица2" varag'ida ishlaydi
   if (sheetName !== 'Razmerlar rejasi' && sheetName !== 'Таблица2') return;
   
   const col = e.range.getColumn();
   const row = e.range.getRow();
+  if (row < 2) return;
   
-  // B ustunida (Razmer) o'zgarish bo'lganda → D ustuniga (SizeGroup) avto yozish
-  if (col === 2 && row >= 2) {
+  // D ustuni (SizeGroup) o'zgarganda → B ustuniga dropdown qo'yish
+  if (col === 4) {
+    const group = String(e.range.getValue()).trim().toLowerCase();
+    let sizes = [];
+    
+    if (group === 'harf' || group === 'харфли') sizes = HARF_SIZES;
+    else if (group === 'son' || group === 'сон') sizes = SON_SIZES;
+    else if (group === 'bola' || group === 'детский' || group === 'болалар') sizes = BOLA_SIZES;
+    
+    const cell = sheet.getRange(row, 2); // B ustuni
+    
+    if (sizes.length > 0) {
+      const rule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(sizes, true)
+        .setAllowInvalid(false)
+        .build();
+      cell.setDataValidation(rule);
+      cell.setValue(''); // eski qiymatni tozalash
+    }
+  }
+  
+  // B ustuni (Razmer) o'zgarganda → D ustuniga SizeGroup avto yozish
+  if (col === 2) {
     const razmer = e.range.getValue();
     if (razmer) {
       const group = getSizeGroup(razmer);
