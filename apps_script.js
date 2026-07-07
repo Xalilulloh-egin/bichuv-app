@@ -36,8 +36,8 @@ function onEdit(e) {
   const row = e.range.getRow();
   if (row < 2) return;
   
-  // D ustuni (SizeGroup) o'zgarganda → B ustuniga dropdown qo'yish
-  if (col === 4) {
+  // B ustuni (SizeGroup) o'zgarganda → C ustuniga dropdown qo'yish
+  if (col === 2) {
     const group = String(e.range.getValue()).trim().toLowerCase();
     let sizes = [];
     
@@ -45,7 +45,7 @@ function onEdit(e) {
     else if (group === 'son' || group === 'сон') sizes = SON_SIZES;
     else if (group === 'bola' || group === 'детский' || group === 'болалар') sizes = BOLA_SIZES;
     
-    const cell = sheet.getRange(row, 2); // B ustuni
+    const cell = sheet.getRange(row, 3); // C ustuni - Razmer
     
     if (sizes.length > 0) {
       const rule = SpreadsheetApp.newDataValidation()
@@ -53,16 +53,16 @@ function onEdit(e) {
         .setAllowInvalid(false)
         .build();
       cell.setDataValidation(rule);
-      cell.setValue(''); // eski qiymatni tozalash
+      cell.setValue('');
     }
   }
   
-  // B ustuni (Razmer) o'zgarganda → D ustuniga SizeGroup avto yozish
-  if (col === 2) {
+  // C ustuni (Razmer) o'zgarganda → B ustuniga SizeGroup avto yozish
+  if (col === 3) {
     const razmer = e.range.getValue();
     if (razmer) {
       const group = getSizeGroup(razmer);
-      sheet.getRange(row, 4).setValue(group);
+      sheet.getRange(row, 2).setValue(group);
     }
   }
 }
@@ -133,12 +133,13 @@ function getAllData() {
   if (rejaSheet) {
     const rd = rejaSheet.getDataRange().getValues();
     for (let i = 1; i < rd.length; i++) {
-      const trimId = String(rd[i][0]).trim();
-      const size = String(rd[i][1]).trim();
-      const qty = parseNum(rd[i][2]);
+      const trimId = String(rd[i][0]).trim();   // A - Trimkarta
+      const group = String(rd[i][1] || '').trim(); // B - SizeGroup
+      const size = String(rd[i][2]).trim();      // C - Razmer
+      const qty = parseNum(rd[i][3]);            // D - Reja soni
       if (!trimId || !size) continue;
-      const group = String(rd[i][3] || '').trim() || getSizeGroup(size);
-      if (!rejaMap[trimId]) rejaMap[trimId] = { sizes: [], reja: {}, sizeGroup: group };
+      const sizeGroup = group || getSizeGroup(size);
+      if (!rejaMap[trimId]) rejaMap[trimId] = { sizes: [], reja: {}, sizeGroup: sizeGroup };
       rejaMap[trimId].sizes.push(size);
       rejaMap[trimId].reja[size] = qty;
     }
@@ -275,9 +276,9 @@ function fillAllSizeGroups() {
   
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    const razmer = String(data[i][1]).trim();
-    if (razmer && !String(data[i][3]).trim()) {
-      sheet.getRange(i + 1, 4).setValue(getSizeGroup(razmer));
+    const razmer = String(data[i][2]).trim(); // C - Razmer
+    if (razmer && !String(data[i][1]).trim()) { // B - SizeGroup bo'sh bo'lsa
+      sheet.getRange(i + 1, 2).setValue(getSizeGroup(razmer));
     }
   }
 }
