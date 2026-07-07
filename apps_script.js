@@ -7,19 +7,46 @@
 //    Execute as: Me | Access: Anyone
 // 4. URL ni saytga kiriting
 // ==========================================
-//
-// KERAKLI VARAQLAR:
-// - "ТРИМКАРТА РЎЙХАТИ" — trimkarta ro'yxati (mavjud)
-// - "Факт"               — partiya ma'lumotlari (mavjud)
-// - "Razmerlar rejasi"   — YANGI: razmer bo'yicha reja
-//       Ustunlar: Trimkarta | Razmer | Reja soni | SizeGroup
-//       Masalan:  B26-146   | 128    | 250       | bola
-//                 B26-146   | 134    | 280       | bola
-//                 B26-153   | M      | 400       | harf
-// - "Razmerlar fakt"     — avto yaratiladi: saytdan kiritilgan fakt
-// ==========================================
 
 const SS_ID = '1a-HRTEE6VgEmCgnbsEf9aPcthUtPMH9IhppNEDnyGiQ';
+
+// Razmer → SizeGroup mapping
+const HARF_SIZES = ['XXS','XS','S','M','L','XL','XXL','3XL','4XL','5XL'];
+const SON_SIZES = ['40','42','44','46','48','50','52','54','56','58','60','62','64','66','68','70','72','74','76','78','80','82','84','86'];
+const BOLA_SIZES = ['120','122','124','126','128','130','132','134','136','138','140','142','144','146','148','150','152','154','156','158','160','162','164','166'];
+
+function getSizeGroup(razmer) {
+  const r = String(razmer).trim().toUpperCase();
+  if (HARF_SIZES.includes(r)) return 'harf';
+  const num = parseInt(r);
+  if (isNaN(num)) return 'harf';
+  if (num >= 120 && num <= 166) return 'bola';
+  if (num >= 40 && num <= 86) return 'son';
+  return 'son';
+}
+
+// ===== AUTO SIZE GROUP (Razmer tanlanganda avto to'ldiriladi) =====
+function onEdit(e) {
+  const sheet = e.source.getActiveSheet();
+  const sheetName = sheet.getName();
+  
+  // Faqat "Razmerlar rejasi" yoki "Таблица2" varag'ida ishlaydi
+  if (sheetName !== 'Razmerlar rejasi' && sheetName !== 'Таблица2') return;
+  
+  const col = e.range.getColumn();
+  const row = e.range.getRow();
+  
+  // B ustunida (Razmer) o'zgarish bo'lganda → D ustuniga (SizeGroup) avto yozish
+  if (col === 2 && row >= 2) {
+    const razmer = e.range.getValue();
+    if (razmer) {
+      const group = getSizeGroup(razmer);
+      sheet.getRange(row, 4).setValue(group);
+    }
+  }
+}
+
+// ===== MAIN HANDLERS =====
 
 function doGet(e) {
   const action = e.parameter.action;
@@ -79,8 +106,8 @@ function getAllData() {
     }
   }
 
-  // 3. Razmerlar REJA (faqat o'qish — Sheets dan)
-  const rejaSheet = ss.getSheetByName('Razmerlar rejasi');
+  // 3. Razmerlar REJA — "Razmerlar rejasi" yoki "Таблица2" dan o'qish
+  const rejaSheet = ss.getSheetByName('Razmerlar rejasi') || ss.getSheetByName('Таблица2');
   const rejaMap = {};
   if (rejaSheet) {
     const rd = rejaSheet.getDataRange().getValues();
@@ -88,15 +115,15 @@ function getAllData() {
       const trimId = String(rd[i][0]).trim();
       const size = String(rd[i][1]).trim();
       const qty = parseNum(rd[i][2]);
-      const group = String(rd[i][3] || 'harf').trim();
       if (!trimId || !size) continue;
+      const group = String(rd[i][3] || '').trim() || getSizeGroup(size);
       if (!rejaMap[trimId]) rejaMap[trimId] = { sizes: [], reja: {}, sizeGroup: group };
       rejaMap[trimId].sizes.push(size);
       rejaMap[trimId].reja[size] = qty;
     }
   }
 
-  // 4. Razmerlar FAKT (saytdan kiritilgan)
+  // 4. Razmerlar FAKT
   const faktRazSheet = ss.getSheetByName('Razmerlar fakt');
   const faktRazMap = {};
   if (faktRazSheet) {
@@ -146,7 +173,7 @@ function getTrimkartaList() {
 function savePartiya(data) {
   const ss = SpreadsheetApp.openById(SS_ID);
   const sheet = ss.getSheetByName('Факт');
-  if (!sheet) return { status:'error', message:'Факт varag\'i topilmadi' };
+  if (!sheet) return { status:'error', message:'Факт topilmadi' };
 
   if (data.rowIndex) {
     const row = data.rowIndex;
@@ -181,7 +208,7 @@ function deletePartiya(data) {
   return { status: 'ok' };
 }
 
-// ===== SAVE FAKT RAZMER (faqat fakt — reja o'zgarmaydi) =====
+// ===== SAVE FAKT RAZMER =====
 
 function saveFaktRazmer(data) {
   const ss = SpreadsheetApp.openById(SS_ID);
@@ -217,6 +244,21 @@ function saveFaktRazmer(data) {
   }
 
   return { status: 'ok' };
+}
+
+// ===== MAVJUD SIZE GROUP LARNI AVTO TO'LDIRISH (bir marta ishlatish) =====
+function fillAllSizeGroups() {
+  const ss = SpreadsheetApp.openById(SS_ID);
+  const sheet = ss.getSheetByName('Razmerlar rejasi') || ss.getSheetByName('Таблица2');
+  if (!sheet) return;
+  
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const razmer = String(data[i][1]).trim();
+    if (razmer && !String(data[i][3]).trim()) {
+      sheet.getRange(i + 1, 4).setValue(getSizeGroup(razmer));
+    }
+  }
 }
 
 // ===== HELPERS =====
