@@ -44,6 +44,7 @@ function App(){
   const[hisobotTab,setHisobotTab]=useState("trim");
   const[sortCol,setSortCol]=useState("id");
   const[sortDir,setSortDir]=useState("asc");
+  const[bichForm,setBichForm]=useState(null); // {partiya, trimId, ...}
 
   const flash=(m)=>{setToast(m);setTimeout(()=>setToast(""),2200);};
 
@@ -104,6 +105,23 @@ function App(){
     setSaving(false);flash("Fakt saqlandi ✓");
   };
 
+  const openBichForm=(p)=>{
+    setBichForm({partiya:p.partiya,trimId:selected.id,mahsulot:selected.name,rangi:selected.color,
+      sana:new Date().toISOString().slice(0,10),bichildiKg:"",topBoshi:"",otxod:"",dona:"",partiyaKg:p.partiyaKg});
+    setView("bichish");
+  };
+
+  const saveBichish=async()=>{
+    if(!bichForm.bichildiKg){flash("Бичилди кг kiriting");return;}
+    setSaving(true);
+    const b=+bichForm.bichildiKg||0,t=+bichForm.topBoshi||0,o=+bichForm.otxod||0;
+    const payload={action:"saveBichish",...bichForm,bichildiKg:b,topBoshi:t,otxod:o,dona:+bichForm.dona||0};
+    try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)});flash("Saqlandi ✓");}
+    catch(e){flash("Xatolik");}
+    setSaving(false);setBichForm(null);setView("detail");
+    setTimeout(()=>load(),1500);
+  };
+
   const curParts=selected?.partiyalar||[];
   const curStats=useMemo(()=>{
     const st={partiyaKg:0,bichildi:0,qoldiq:0,tayyor:0,bichilgan:0};
@@ -145,6 +163,59 @@ function App(){
 
   const toggleSort=(col)=>{if(sortCol===col)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortCol(col);setSortDir("asc");}};
   const sortIcon=(col)=>sortCol===col?(sortDir==="asc"?" ↑":" ↓"):"";
+
+  // ========== BICHISH FORM ==========
+  if(view==="bichish"&&bichForm){
+    const b=+bichForm.bichildiKg||0,t=+bichForm.topBoshi||0,o=+bichForm.otxod||0;
+    const toza=b>0?(b-t-o).toFixed(1):0;
+    return(
+    <Shell tab={tab} setTab={setTab} toast={toast}>
+      <Hdr left={<Back onClick={()=>{setView("detail");setBichForm(null);}}/>} title="Bichish kiritish"/>
+      <div style={S.infoMini}>
+        <span style={S.miniId}>{bichForm.trimId}</span>
+        <span style={S.miniClr}>Partiya: {bichForm.partiya} — {bichForm.partiyaKg} кг</span>
+      </div>
+      <div style={S.card}>
+        <div style={{display:"flex",gap:10,marginBottom:12}}>
+          <div style={{flex:1}}><Lbl>Sana</Lbl><input style={S.inp} type="date" value={bichForm.sana} onChange={e=>setBichForm(p=>({...p,sana:e.target.value}))}/></div>
+        </div>
+
+        <Lbl>Бичилди кг (жами)</Lbl>
+        <NumInput style={{...S.inp,...S.inpN,fontSize:18,padding:14,borderColor:"#93c5fd",background:"#eff6ff",marginBottom:12}}
+          inputMode="decimal" value={bichForm.bichildiKg} placeholder="0"
+          onChange={e=>setBichForm(p=>({...p,bichildiKg:e.target.value}))}/>
+
+        <div style={{display:"flex",gap:10,marginBottom:12}}>
+          <div style={{flex:1}}>
+            <Lbl>Топ боши кг</Lbl>
+            <NumInput style={{...S.inp,...S.inpN,borderColor:"#fdba74",background:"#fff7ed"}} inputMode="decimal"
+              value={bichForm.topBoshi} placeholder="0"
+              onChange={e=>setBichForm(p=>({...p,topBoshi:e.target.value}))}/>
+          </div>
+          <div style={{flex:1}}>
+            <Lbl>Отход кг</Lbl>
+            <NumInput style={{...S.inp,...S.inpN,borderColor:"#fca5a5",background:"#fef2f2"}} inputMode="decimal"
+              value={bichForm.otxod} placeholder="0"
+              onChange={e=>setBichForm(p=>({...p,otxod:e.target.value}))}/>
+          </div>
+        </div>
+
+        <div style={{padding:12,background:"#f0fdf4",borderRadius:10,border:"1px solid #86efac",marginBottom:12,textAlign:"center"}}>
+          <div style={{fontSize:11,color:"#16a34a",fontWeight:600,marginBottom:2}}>ТОЗА БИЧИЛГАН</div>
+          <div style={{fontSize:22,fontWeight:800,color:"#166534"}}>{toza} кг</div>
+        </div>
+
+        <Lbl>Бичилди дона</Lbl>
+        <NumInput style={{...S.inp,...S.inpN,borderColor:"#c4b5fd",background:"#faf5ff",marginBottom:16}} inputMode="numeric"
+          value={bichForm.dona} placeholder="0"
+          onChange={e=>setBichForm(p=>({...p,dona:e.target.value}))}/>
+
+        <Btn primary full onClick={saveBichish} disabled={saving}>
+          {saving?"Saqlanmoqda...":"Кунлик бичувга saqlash"}
+        </Btn>
+      </div>
+    </Shell>);
+  }
 
   // ========== RAZMER ==========
   if(view==="razmer"&&selected){
@@ -290,7 +361,11 @@ function App(){
                 <div style={{height:4,background:"#e2e8f0",borderRadius:2,overflow:"hidden"}}>
                   <div style={{height:"100%",width:`${Math.min(+bichPct,100)}%`,background:+bichPct>=100?"#16a34a":"#2563eb",borderRadius:2}}/>
                 </div>
-                <div style={{fontSize:10,color:"#94a3b8",marginTop:2,textAlign:"right"}}>{bichPct}% bichilgan</div>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+                  <div style={{fontSize:10,color:"#94a3b8"}}>{bichPct}% bichilgan</div>
+                  <button style={{border:"none",background:"#2563eb",color:"#fff",fontSize:11,fontWeight:600,padding:"3px 12px",borderRadius:6,cursor:"pointer"}}
+                    onClick={(e)=>{e.stopPropagation();openBichForm(p);}}>✂️ Bichish</button>
+                </div>
               </div>)}
             </div>);
           })}

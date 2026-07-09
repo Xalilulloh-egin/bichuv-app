@@ -53,7 +53,38 @@ function doGet(e) {
 function doPost(e) {
   const data = JSON.parse(e.postData.contents);
   if (data.action === 'saveFaktRazmer') return json(saveFaktRazmer(data));
+  if (data.action === 'saveBichish') return json(saveBichish(data));
   return json({ status:'error', message:'Unknown action' });
+}
+
+// ===== SAVE BICHISH — "Кунлик Бичув" varag'iga yozish =====
+// A=Сана | B=Партия рақами | C=Тримкарта | D=Махсулот номи | E=Ранги
+// F=Кун бошидаги (авт) | G=Бичилди кг | H=Топ боши кг | I=Отход кг
+// J=Тоза бичилган кг | K=Бичилди ДОНА | L=Хар бир иш кг
+function saveBichish(data) {
+  const ss = SpreadsheetApp.openById(SS_ID);
+  const sheet = ss.getSheetByName('Кунлик Бичув');
+  if (!sheet) return { status:'error', message:'Кунлик Бичув varag\'i topilmadi' };
+  
+  const bichildi = Number(data.bichildiKg) || 0;
+  const topBoshi = Number(data.topBoshi) || 0;
+  const otxod = Number(data.otxod) || 0;
+  const toza = bichildi - topBoshi - otxod;
+  const dona = Number(data.dona) || 0;
+  
+  const newRow = sheet.getLastRow() + 1;
+  sheet.getRange(newRow, 1).setValue(data.sana || Utilities.formatDate(new Date(), 'Asia/Tashkent', 'yyyy-MM-dd'));  // A - Сана
+  sheet.getRange(newRow, 2).setValue(data.partiya);       // B - Партия рақами
+  sheet.getRange(newRow, 3).setValue(data.trimId);         // C - Тримкарта
+  sheet.getRange(newRow, 4).setValue(data.mahsulot || ''); // D - Махсулот номи
+  sheet.getRange(newRow, 5).setValue(data.rangi || '');    // E - Ранги
+  sheet.getRange(newRow, 7).setValue(bichildi);             // G - Бичилди кг
+  sheet.getRange(newRow, 8).setValue(topBoshi);             // H - Топ боши кг
+  sheet.getRange(newRow, 9).setValue(otxod);                // I - Отход кг
+  sheet.getRange(newRow, 10).setValue(toza);                // J - Тоза бичилган кг
+  sheet.getRange(newRow, 11).setValue(dona);                // K - Бичилди ДОНА
+  
+  return { status: 'ok' };
 }
 
 // ===== DEBUG =====
