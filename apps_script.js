@@ -58,13 +58,12 @@ function doPost(e) {
 }
 
 // ===== SAVE BICHISH — "Кунлик Бичув" varag'iga yozish =====
-// A=Сана | B=Партия рақами | C=Тримкарта | D=Махсулот номи | E=Ранги
-// F=Кун бошидаги (авт) | G=Бичилди кг | H=Топ боши кг | I=Отход кг
-// J=Тоза бичилган кг | K=Бичилди ДОНА | L=Хар бир иш кг
+// A=Сана | B=Партия рақами | C,D,E=formulalar (yozilmaydi)
+// G=Бичилди кг | H=Топ боши кг | I=Отход кг | J=Тоза (авт) | K=Бичилди ДОНА
 function saveBichish(data) {
   const ss = SpreadsheetApp.openById(SS_ID);
   const sheet = ss.getSheetByName('Кунлик Бичув');
-  if (!sheet) return { status:'error', message:'Кунлик Бичув varag\'i topilmadi' };
+  if (!sheet) return { status:'error', message:'Кунлик Бичув topilmadi' };
   
   const bichildi = Number(data.bichildiKg) || 0;
   const topBoshi = Number(data.topBoshi) || 0;
@@ -72,19 +71,29 @@ function saveBichish(data) {
   const toza = bichildi - topBoshi - otxod;
   const dona = Number(data.dona) || 0;
   
-  const newRow = sheet.getLastRow() + 1;
-  sheet.getRange(newRow, 1).setValue(data.sana || Utilities.formatDate(new Date(), 'Asia/Tashkent', 'yyyy-MM-dd'));  // A - Сана
-  sheet.getRange(newRow, 2).setValue(data.partiya);       // B - Партия рақами
-  sheet.getRange(newRow, 3).setValue(data.trimId);         // C - Тримкарта
-  sheet.getRange(newRow, 4).setValue(data.mahsulot || ''); // D - Махсулот номи
-  sheet.getRange(newRow, 5).setValue(data.rangi || '');    // E - Ранги
-  sheet.getRange(newRow, 7).setValue(bichildi);             // G - Бичилди кг
-  sheet.getRange(newRow, 8).setValue(topBoshi);             // H - Топ боши кг
-  sheet.getRange(newRow, 9).setValue(otxod);                // I - Отход кг
-  sheet.getRange(newRow, 10).setValue(toza);                // J - Тоза бичилган кг
-  sheet.getRange(newRow, 11).setValue(dona);                // K - Бичилди ДОНА
+  // A ustunidan oxirgi yozilgan qatorni topish (bo'sh qatorlarni o'tkazib)
+  const colA = sheet.getRange('A1:A').getValues();
+  let lastDataRow = 4; // minimum 4-qatordan keyin
+  for (let i = colA.length - 1; i >= 0; i--) {
+    if (colA[i][0] !== '' && colA[i][0] !== null) {
+      lastDataRow = i + 1;
+      break;
+    }
+  }
+  const newRow = Math.max(lastDataRow + 1, 5); // minimum 5-qatordan
   
-  return { status: 'ok' };
+  const sana = data.sana || Utilities.formatDate(new Date(), 'Asia/Tashkent', 'yyyy-MM-dd');
+  
+  sheet.getRange(newRow, 1).setValue(sana);          // A - Сана
+  sheet.getRange(newRow, 2).setValue(data.partiya);   // B - Партия рақами
+  // C, D, E — yozilmaydi (formulalar bor)
+  sheet.getRange(newRow, 7).setValue(bichildi);       // G - Бичилди кг
+  sheet.getRange(newRow, 8).setValue(topBoshi);       // H - Топ боши кг
+  sheet.getRange(newRow, 9).setValue(otxod);          // I - Отход кг
+  sheet.getRange(newRow, 10).setValue(toza);          // J - Тоза бичилган кг
+  sheet.getRange(newRow, 11).setValue(dona);          // K - Бичилди ДОНА
+  
+  return { status: 'ok', row: newRow };
 }
 
 // ===== DEBUG =====

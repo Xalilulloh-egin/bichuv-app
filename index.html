@@ -181,11 +181,12 @@ function App(){
       {/* KG bo'limi */}
       <div style={S.card}>
         <div style={{fontSize:11,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:0.5,marginBottom:10}}>Kilogramlar</div>
-        <Lbl>Бичилди кг (жами)</Lbl>
-        <NumInput style={{...S.inp,...S.inpN,fontSize:20,padding:14,borderColor:"#93c5fd",background:"#eff6ff",marginBottom:10}}
+        <Lbl>Бичилди кг (жами) — max: {bichForm.partiyaKg} кг</Lbl>
+        <NumInput style={{...S.inp,...S.inpN,fontSize:20,padding:14,borderColor:b>bichForm.partiyaKg?"#fca5a5":"#93c5fd",background:b>bichForm.partiyaKg?"#fef2f2":"#eff6ff",marginBottom:2}}
           inputMode="decimal" value={bichForm.bichildiKg} placeholder="0"
           onChange={e=>setBichForm(p=>({...p,bichildiKg:e.target.value}))}/>
-        <div style={{display:"flex",gap:10,marginBottom:10}}>
+        {b>bichForm.partiyaKg&&<div style={{fontSize:11,color:"#dc2626",marginBottom:8,textAlign:"center"}}>⚠️ Partiya кг dan oshib ketdi!</div>}
+        <div style={{display:"flex",gap:10,marginBottom:10,marginTop:b>bichForm.partiyaKg?0:10}}>
           <div style={{flex:1}}>
             <Lbl>Топ боши кг</Lbl>
             <NumInput style={{...S.inp,...S.inpN,borderColor:"#fdba74",background:"#fff7ed"}} inputMode="decimal"
@@ -202,10 +203,9 @@ function App(){
             <div style={{fontSize:10,color:"#16a34a",fontWeight:600}}>ТОЗА</div>
             <div style={{fontSize:18,fontWeight:800,color:"#166534"}}>{toza} кг</div>
           </div>
-          <div style={{flex:1}}>
-            <Lbl>Дона (жами)</Lbl>
-            <NumInput style={{...S.inp,...S.inpN,borderColor:"#c4b5fd",background:"#faf5ff"}} inputMode="numeric"
-              value={bichForm.dona} placeholder="0" onChange={e=>setBichForm(p=>({...p,dona:e.target.value}))}/>
+          <div style={{flex:1,padding:10,background:"#faf5ff",borderRadius:8,border:"1px solid #c4b5fd",textAlign:"center"}}>
+            <div style={{fontSize:10,color:"#7c3aed",fontWeight:600}}>ДОНА (авто)</div>
+            <div style={{fontSize:18,fontWeight:800,color:"#6d28d9"}}>{rTotalFakt>0?rTotalFakt.toLocaleString():"0"}</div>
           </div>
         </div>
       </div>
@@ -252,12 +252,14 @@ function App(){
       )}
 
       <Btn primary full style={{marginTop:4,padding:14,fontSize:16}} onClick={async()=>{
+        const bi=+bichForm.bichildiKg||0;
+        if(bi<=0){flash("Бичилди кг kiriting");return;}
+        if(bi>bichForm.partiyaKg){flash("Partiya кг dan oshib ketdi!");return;}
         setSaving(true);
-        const bi=+bichForm.bichildiKg||0,tp=+bichForm.topBoshi||0,ot=+bichForm.otxod||0;
+        const tp=+bichForm.topBoshi||0,ot=+bichForm.otxod||0;
+        const autoD=rTotalFakt;
         // Save bichish
-        if(bi>0){
-          try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveBichish",...bichForm,bichildiKg:bi,topBoshi:tp,otxod:ot,dona:+bichForm.dona||0})});}catch(e){}
-        }
+        try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveBichish",...bichForm,bichildiKg:bi,topBoshi:tp,otxod:ot,dona:autoD})});}catch(e){}
         // Save razmer fakt
         if(hasReja){
           try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveFaktRazmer",trimId:selected.id,sizes:activeSizes,fakt})});}catch(e){}
@@ -265,7 +267,7 @@ function App(){
         }
         setSaving(false);flash("Saqlandi ✓");setBichForm(null);setView("detail");
         setTimeout(()=>load(),1500);
-      }} disabled={saving}>{saving?"Saqlanmoqda...":"💾 Barchasini saqlash"}</Btn>
+      }} disabled={saving||b>bichForm.partiyaKg}>{saving?"Saqlanmoqda...":"💾 Barchasini saqlash"}</Btn>
     </Shell>);
   }
 
