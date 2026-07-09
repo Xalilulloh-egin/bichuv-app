@@ -1,16 +1,8 @@
 // ==========================================
-// BICHUV BAZA — APPS SCRIPT
+// BICHUV BAZA — APPS SCRIPT v3
 // ==========================================
-// 1. "Бичув база" spreadsheet → Extensions → Apps Script
-// 2. Bu kodni joylashtiring
-// 3. Deploy → New deployment → Web app
-//    Execute as: Me | Access: Anyone
-// 4. URL ni saytga kiriting
-// ==========================================
-
 const SS_ID = '1a-HRTEE6VgEmCgnbsEf9aPcthUtPMH9IhppNEDnyGiQ';
 
-// Razmer → SizeGroup mapping
 const HARF_SIZES = ['XXS','XS','S','M','L','XL','XXL','3XL','4XL','5XL'];
 const SON_SIZES = ['40','42','44','46','48','50','52','54','56','58','60','62','64','66','68','70','72','74','76','78','80','82','84','86'];
 const BOLA_SIZES = ['120','122','124','126','128','130','132','134','136','138','140','142','144','146','148','150','152','154','156','158','160','162','164','166'];
@@ -21,76 +13,54 @@ function getSizeGroup(razmer) {
   const num = parseInt(r);
   if (isNaN(num)) return 'harf';
   if (num >= 120 && num <= 166) return 'bola';
-  if (num >= 40 && num <= 86) return 'son';
   return 'son';
 }
 
-// ===== AUTO: SizeGroup tanlansa → Razmer dropdown o'zgaradi =====
+// ===== onEdit: SizeGroup → Razmer dropdown =====
 function onEdit(e) {
   const sheet = e.source.getActiveSheet();
-  const sheetName = sheet.getName();
-  
-  if (sheetName !== 'Razmerlar rejasi' && sheetName !== 'Таблица2') return;
-  
-  const col = e.range.getColumn();
-  const row = e.range.getRow();
+  const nm = sheet.getName();
+  if (nm !== 'Razmerlar rejasi' && nm !== 'Таблица2') return;
+  const col = e.range.getColumn(), row = e.range.getRow();
   if (row < 2) return;
   
-  // B ustuni (SizeGroup) o'zgarganda → C ustuniga dropdown qo'yish
-  if (col === 2) {
-    const group = String(e.range.getValue()).trim().toLowerCase();
+  if (col === 2) { // B=SizeGroup → C=Razmer dropdown
+    const g = String(e.range.getValue()).trim().toLowerCase();
     let sizes = [];
-    
-    if (group === 'harf' || group === 'харфли') sizes = HARF_SIZES;
-    else if (group === 'son' || group === 'сон') sizes = SON_SIZES;
-    else if (group === 'bola' || group === 'детский' || group === 'болалар') sizes = BOLA_SIZES;
-    
-    const cell = sheet.getRange(row, 3); // C ustuni - Razmer
-    
+    if (g === 'harf' || g === 'харфли') sizes = HARF_SIZES;
+    else if (g === 'son' || g === 'сон') sizes = SON_SIZES;
+    else if (g === 'bola' || g === 'детский' || g === 'болалар') sizes = BOLA_SIZES;
     if (sizes.length > 0) {
-      const rule = SpreadsheetApp.newDataValidation()
-        .requireValueInList(sizes, true)
-        .setAllowInvalid(false)
-        .build();
-      cell.setDataValidation(rule);
-      cell.setValue('');
+      sheet.getRange(row, 3).setDataValidation(
+        SpreadsheetApp.newDataValidation().requireValueInList(sizes, true).setAllowInvalid(false).build()
+      ).setValue('');
     }
   }
-  
-  // C ustuni (Razmer) o'zgarganda → B ustuniga SizeGroup avto yozish
-  if (col === 3) {
+  if (col === 3) { // C=Razmer → B=SizeGroup avto
     const razmer = e.range.getValue();
-    if (razmer) {
-      const group = getSizeGroup(razmer);
-      sheet.getRange(row, 2).setValue(group);
-    }
+    if (razmer) sheet.getRange(row, 2).setValue(getSizeGroup(razmer));
   }
 }
 
-// ===== MAIN HANDLERS =====
-
+// ===== HANDLERS =====
 function doGet(e) {
   const action = e.parameter.action;
   if (action === 'getAllData') return json(getAllData());
-  if (action === 'getTrimkartaList') return json(getTrimkartaList());
   return json({ status:'error', message:'Unknown action' });
 }
 
 function doPost(e) {
   const data = JSON.parse(e.postData.contents);
-  if (data.action === 'savePartiya') return json(savePartiya(data));
-  if (data.action === 'deletePartiya') return json(deletePartiya(data));
   if (data.action === 'saveFaktRazmer') return json(saveFaktRazmer(data));
   return json({ status:'error', message:'Unknown action' });
 }
 
 // ===== GET ALL DATA =====
-
 function getAllData() {
   const ss = SpreadsheetApp.openById(SS_ID);
 
-  // 1. Trimkarta ro'yxati
-  const trimSheet = ss.getSheetByName('ТРИМКАРТА РЎЙХАТИ') || ss.getSheets()[0];
+  // 1. TRIMKARTALAR
+  const trimSheet = ss.getSheetByName('Тримкарталар') || ss.getSheetByName('ТРИМКАРТА РЎЙХАТИ') || ss.getSheets()[0];
   const trimData = trimSheet.getDataRange().getValues();
   const trimkartalar = [];
   for (let i = 2; i < trimData.length; i++) {
@@ -105,47 +75,54 @@ function getAllData() {
     });
   }
 
-  // 2. Partiyalar (Факт)
-  const faktSheet = ss.getSheetByName('Факт');
+  // 2. ПАРТИЯЛАР — "Партиялар" varag'idan
+  // A=Сана | B=Тримкарта № | C=Махсулот номи | D=Ранги | E=Партия рақами | F=Партия кг | G=Бичилган кг | H=Қолдиқ кг | I=# | J=Холат
+  const partSheet = ss.getSheetByName('Партиялар');
   const partiyalar = {};
-  if (faktSheet) {
-    const fd = faktSheet.getDataRange().getValues();
-    for (let i = 4; i < fd.length; i++) {
-      const trimId = String(fd[i][2]).trim();
+  if (partSheet) {
+    const pd = partSheet.getDataRange().getValues();
+    for (let i = 3; i < pd.length; i++) { // row 3 = header, data from row 4
+      const trimId = String(pd[i][1]).trim(); // B - Тримкарта №
       if (!trimId) continue;
+      const sana = formatDate(pd[i][0]);      // A - Сана
+      const partRaqam = String(pd[i][4]).trim(); // E - Партия рақами
+      if (!partRaqam) continue;
+      
       if (!partiyalar[trimId]) partiyalar[trimId] = [];
       partiyalar[trimId].push({
         rowIndex: i + 1,
-        sana: formatDate(fd[i][0]),
-        partiya: String(fd[i][1]).trim(),
-        trimId, mahsulot: String(fd[i][3]).trim(), rangi: String(fd[i][4]).trim(),
-        kunBoshiKg: parseNum(fd[i][5]), bichildiKg: parseNum(fd[i][6]),
-        topBoshi: parseNum(fd[i][7]), otxod: parseNum(fd[i][8]),
-        tozaBichilgan: parseNum(fd[i][9]), dona: parseNum(fd[i][10]),
-        harBirIsh: parseNum(fd[i][11]), kunOxiriKg: parseNum(fd[i][12]),
+        sana: sana,
+        trimId: trimId,
+        mahsulot: String(pd[i][2]).trim(),     // C - Махсулот номи
+        rangi: String(pd[i][3]).trim(),         // D - Ранги
+        partiya: partRaqam,                     // E - Партия рақами
+        partiyaKg: parseNum(pd[i][5]),          // F - Партия кг
+        bichildiKg: parseNum(pd[i][6]),         // G - Бичилган кг
+        qoldiqKg: parseNum(pd[i][7]),           // H - Қолдиқ кг
+        holat: String(pd[i][9]||'').trim(),     // J - Холат
       });
     }
   }
 
-  // 3. Razmerlar REJA — "Razmerlar rejasi" yoki "Таблица2" dan o'qish
+  // 3. RAZMERLAR REJASI — A=Trimkarta | B=SizeGroup | C=Razmer | D=Reja soni
   const rejaSheet = ss.getSheetByName('Razmerlar rejasi') || ss.getSheetByName('Таблица2');
   const rejaMap = {};
   if (rejaSheet) {
     const rd = rejaSheet.getDataRange().getValues();
     for (let i = 1; i < rd.length; i++) {
-      const trimId = String(rd[i][0]).trim();   // A - Trimkarta
-      const group = String(rd[i][1] || '').trim(); // B - SizeGroup
-      const size = String(rd[i][2]).trim();      // C - Razmer
-      const qty = parseNum(rd[i][3]);            // D - Reja soni
+      const trimId = String(rd[i][0]).trim();
+      const group = String(rd[i][1]||'').trim();
+      const size = String(rd[i][2]).trim();
+      const qty = parseNum(rd[i][3]);
       if (!trimId || !size) continue;
-      const sizeGroup = group || getSizeGroup(size);
-      if (!rejaMap[trimId]) rejaMap[trimId] = { sizes: [], reja: {}, sizeGroup: sizeGroup };
+      const sg = group || getSizeGroup(size);
+      if (!rejaMap[trimId]) rejaMap[trimId] = { sizes: [], reja: {}, sizeGroup: sg };
       rejaMap[trimId].sizes.push(size);
       rejaMap[trimId].reja[size] = qty;
     }
   }
 
-  // 4. Razmerlar FAKT
+  // 4. RAZMERLAR FAKT
   const faktRazSheet = ss.getSheetByName('Razmerlar fakt');
   const faktRazMap = {};
   if (faktRazSheet) {
@@ -160,13 +137,12 @@ function getAllData() {
     }
   }
 
-  // Birlashtirish
+  // BIRLASHTIRISH
   const result = trimkartalar.map(t => {
     const r = rejaMap[t.id];
     let sizes = null;
     if (r) {
-      const fk = faktRazMap[t.id] || {};
-      sizes = { group: r.sizeGroup, active: r.sizes, reja: r.reja, fakt: fk };
+      sizes = { group: r.sizeGroup, active: r.sizes, reja: r.reja, fakt: faktRazMap[t.id] || {} };
     }
     return { ...t, partiyalar: partiyalar[t.id] || [], sizes };
   });
@@ -174,84 +150,20 @@ function getAllData() {
   return { status: 'ok', data: result };
 }
 
-// ===== TRIMKARTA LIST =====
-
-function getTrimkartaList() {
-  const ss = SpreadsheetApp.openById(SS_ID);
-  const sheet = ss.getSheetByName('ТРИМКАРТА РЎЙХАТИ') || ss.getSheets()[0];
-  const data = sheet.getDataRange().getValues();
-  const result = [];
-  for (let i = 2; i < data.length; i++) {
-    const id = String(data[i][0]).trim();
-    if (!id) continue;
-    result.push({ id, name: String(data[i][1]).trim(), color: String(data[i][2]).trim(),
-      orderQty: parseNum(data[i][6]), mavjudKg: parseNum(data[i][9]) });
-  }
-  return { status: 'ok', data: result };
-}
-
-// ===== SAVE / DELETE PARTIYA =====
-
-function savePartiya(data) {
-  const ss = SpreadsheetApp.openById(SS_ID);
-  const sheet = ss.getSheetByName('Факт');
-  if (!sheet) return { status:'error', message:'Факт topilmadi' };
-
-  if (data.rowIndex) {
-    const row = data.rowIndex;
-    sheet.getRange(row, 1).setValue(data.sana);
-    sheet.getRange(row, 2).setValue(data.partiya);
-    sheet.getRange(row, 7).setValue(data.bichildiKg);
-    sheet.getRange(row, 8).setValue(data.topBoshi);
-    sheet.getRange(row, 9).setValue(data.otxod);
-    sheet.getRange(row, 10).setValue(data.tozaBichilgan);
-    sheet.getRange(row, 11).setValue(data.dona);
-  } else {
-    const newRow = sheet.getLastRow() + 1;
-    sheet.getRange(newRow, 1).setValue(data.sana);
-    sheet.getRange(newRow, 2).setValue(data.partiya);
-    sheet.getRange(newRow, 3).setValue(data.trimId);
-    sheet.getRange(newRow, 4).setValue(data.mahsulot || '');
-    sheet.getRange(newRow, 5).setValue(data.rangi || '');
-    sheet.getRange(newRow, 7).setValue(data.bichildiKg);
-    sheet.getRange(newRow, 8).setValue(data.topBoshi);
-    sheet.getRange(newRow, 9).setValue(data.otxod);
-    sheet.getRange(newRow, 10).setValue(data.tozaBichilgan);
-    sheet.getRange(newRow, 11).setValue(data.dona);
-  }
-  return { status: 'ok' };
-}
-
-function deletePartiya(data) {
-  const ss = SpreadsheetApp.openById(SS_ID);
-  const sheet = ss.getSheetByName('Факт');
-  if (!sheet || !data.rowIndex) return { status:'error', message:'Topilmadi' };
-  sheet.deleteRow(data.rowIndex);
-  return { status: 'ok' };
-}
-
 // ===== SAVE FAKT RAZMER =====
-
 function saveFaktRazmer(data) {
   const ss = SpreadsheetApp.openById(SS_ID);
   let sheet = ss.getSheetByName('Razmerlar fakt');
-
   if (!sheet) {
     sheet = ss.insertSheet('Razmerlar fakt');
     sheet.getRange(1, 1, 1, 4).setValues([['Trimkarta', 'Razmer', 'Fakt', 'Sana']]);
     sheet.getRange(1, 1, 1, 4).setFontWeight('bold');
     sheet.setFrozenRows(1);
   }
-
-  // Eski fakt o'chirish
   const existing = sheet.getDataRange().getValues();
   for (let i = existing.length - 1; i >= 1; i--) {
-    if (String(existing[i][0]).trim() === data.trimId) {
-      sheet.deleteRow(i + 1);
-    }
+    if (String(existing[i][0]).trim() === data.trimId) sheet.deleteRow(i + 1);
   }
-
-  // Yangi fakt yozish
   const sizes = data.sizes || [];
   const today = Utilities.formatDate(new Date(), 'Asia/Tashkent', 'yyyy-MM-dd');
   const rows = [];
@@ -259,46 +171,21 @@ function saveFaktRazmer(data) {
     const f = Number(data.fakt[sz]) || 0;
     if (f > 0) rows.push([data.trimId, sz, f, today]);
   });
-
   if (rows.length > 0) {
-    const lastRow = sheet.getLastRow();
-    sheet.getRange(lastRow + 1, 1, rows.length, 4).setValues(rows);
+    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
   }
-
   return { status: 'ok' };
 }
 
-// ===== MAVJUD SIZE GROUP LARNI AVTO TO'LDIRISH (bir marta ishlatish) =====
-function fillAllSizeGroups() {
-  const ss = SpreadsheetApp.openById(SS_ID);
-  const sheet = ss.getSheetByName('Razmerlar rejasi') || ss.getSheetByName('Таблица2');
-  if (!sheet) return;
-  
-  const data = sheet.getDataRange().getValues();
-  for (let i = 1; i < data.length; i++) {
-    const razmer = String(data[i][2]).trim(); // C - Razmer
-    if (razmer && !String(data[i][1]).trim()) { // B - SizeGroup bo'sh bo'lsa
-      sheet.getRange(i + 1, 2).setValue(getSizeGroup(razmer));
-    }
-  }
-}
-
 // ===== HELPERS =====
-
-function parseNum(val) {
-  if (val === null || val === undefined || val === '') return 0;
-  const n = Number(String(val).replace(/\s/g, '').replace(',', '.'));
+function parseNum(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  const n = Number(String(v).replace(/\s/g, '').replace(',', '.'));
   return isNaN(n) ? 0 : n;
 }
-
-function formatDate(val) {
-  if (!val) return '';
-  if (val instanceof Date) {
-    return Utilities.formatDate(val, 'Asia/Tashkent', 'yyyy-MM-dd');
-  }
-  return String(val);
+function formatDate(v) {
+  if (!v) return '';
+  if (v instanceof Date) return Utilities.formatDate(v, 'Asia/Tashkent', 'yyyy-MM-dd');
+  return String(v);
 }
-
-function json(data) {
-  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
-}
+function json(d) { return ContentService.createTextOutput(JSON.stringify(d)).setMimeType(ContentService.MimeType.JSON); }

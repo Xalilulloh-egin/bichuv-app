@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>✂️ Bichuv Boshqaruv</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; color:#1e293b; background:#fff; }
-input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
-input[type=number] { -moz-appearance:textfield; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;color:#1e293b;background:#fff}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -18,49 +17,33 @@ input[type=number] { -moz-appearance:textfield; }
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useCallback, useMemo, useRef } = React;
+const{useState,useEffect,useCallback,useMemo,useRef}=React;
 
-const ALL_SIZES = {
-  harf:["XS","S","M","L","XL","XXL","XXXL","3XL","4XL","5XL"],
-  son:["40","42","44","46","48","50","52","54","56","58","60","62","64","66","68","70"],
-  bola:["72","76","80","84","128","130","134","140","146","152","158","164"],
-};
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbxyVjfs1Z-JcIJ-FMw9QLxLq1qe42zu4hUYOXjv73eqjYkxAmyLkpDsnYmNZ-SHgY6I/exec";
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyVjfs1Z-JcIJ-FMw9QLxLq1qe42zu4hUYOXjv73eqjYkxAmyLkpDsnYmNZ-SHgY6I/exec";
-
-const emptyP = () => ({partiya:"",sana:new Date().toISOString().slice(0,10),bichildiKg:"",topBoshi:"",otxod:"",tozaBichilgan:"",dona:""});
-
-function NumInput({style,...props}) {
-  const ref = useRef(null);
-  useEffect(() => {
-    const el = ref.current;
-    if(!el) return;
-    const prevent = (e) => e.preventDefault();
-    el.addEventListener("wheel", prevent, {passive:false});
-    return () => el.removeEventListener("wheel", prevent);
-  },[]);
-  return <input ref={ref} type="number" {...props} style={style} />;
+function NumInput({style,...props}){
+  const ref=useRef(null);
+  useEffect(()=>{const el=ref.current;if(!el)return;const p=(e)=>e.preventDefault();el.addEventListener("wheel",p,{passive:false});return()=>el.removeEventListener("wheel",p);},[]);
+  return <input ref={ref} type="number" {...props} style={style}/>;
 }
 
-function App() {
-  const [tab,setTab]=useState("dashboard");
-  const [view,setView]=useState("list");
-  const [allData,setAllData]=useState([]);
-  const [connected,setConnected]=useState(false);
-  const [loading,setLoading]=useState(false);
-  const [selected,setSelected]=useState(null);
-  const [search,setSearch]=useState("");
-  const [toast,setToast]=useState("");
-  const [pForm,setPForm]=useState(emptyP());
-  const [editIdx,setEditIdx]=useState(null);
-  const [activeSizes,setActiveSizes]=useState([]);
-  const [reja,setReja]=useState({});
-  const [fakt,setFakt]=useState({});
-  const [saving,setSaving]=useState(false);
-  const [dashFilter,setDashFilter]=useState("all");
-  const [hisobotTab,setHisobotTab]=useState("trim");
-  const [sortCol,setSortCol]=useState("id");
-  const [sortDir,setSortDir]=useState("asc");
+function App(){
+  const[tab,setTab]=useState("dashboard");
+  const[view,setView]=useState("list");
+  const[allData,setAllData]=useState([]);
+  const[connected,setConnected]=useState(false);
+  const[loading,setLoading]=useState(false);
+  const[selected,setSelected]=useState(null);
+  const[search,setSearch]=useState("");
+  const[toast,setToast]=useState("");
+  const[activeSizes,setActiveSizes]=useState([]);
+  const[reja,setReja]=useState({});
+  const[fakt,setFakt]=useState({});
+  const[saving,setSaving]=useState(false);
+  const[dashFilter,setDashFilter]=useState("all");
+  const[hisobotTab,setHisobotTab]=useState("trim");
+  const[sortCol,setSortCol]=useState("id");
+  const[sortDir,setSortDir]=useState("asc");
 
   const flash=(m)=>{setToast(m);setTimeout(()=>setToast(""),2200);};
 
@@ -70,26 +53,24 @@ function App() {
       const res=await fetch(SCRIPT_URL+"?action=getAllData");
       const d=await res.json();
       if(d.status==="ok"&&d.data){setAllData(d.data);setConnected(true);flash("Yuklandi ✓");}
-      else flash("Xatolik: "+(d.message||""));
+      else flash("Xatolik");
     }catch(e){console.error(e);flash("Ulanish xatosi");}
     setLoading(false);
   },[]);
 
   useEffect(()=>{load();},[]);
 
+  // Stats
   const umumiy=useMemo(()=>{
-    const r={trimkartaSoni:allData.length,jamiZakaz:0,jamiMavjud:0,jamiBichildi:0,jamiTopBoshi:0,jamiOtxod:0,jamiToza:0,jamiDona:0,jamiPartiya:0,jamiRejaD:0,jamiFaktD:0,activeCount:0,waitingCount:0};
+    const r={trimSoni:allData.length,jamiZakaz:0,jamiMavjud:0,jamiPartiyaKg:0,jamiBichildi:0,jamiQoldiq:0,jamiDona:0,jamiPartiya:0,jamiRejaD:0,jamiFaktD:0,activeCount:0,waitingCount:0};
     allData.forEach(t=>{
       r.jamiZakaz+=t.orderQty||0;r.jamiMavjud+=t.mavjudKg||0;
       const parts=t.partiyalar||[];r.jamiPartiya+=parts.length;
       if(parts.length>0)r.activeCount++;else r.waitingCount++;
-      parts.forEach(p=>{r.jamiBichildi+=p.bichildiKg||0;r.jamiTopBoshi+=p.topBoshi||0;r.jamiOtxod+=p.otxod||0;r.jamiToza+=p.tozaBichilgan||0;r.jamiDona+=p.dona||0;});
+      parts.forEach(p=>{r.jamiPartiyaKg+=p.partiyaKg||0;r.jamiBichildi+=p.bichildiKg||0;r.jamiQoldiq+=p.qoldiqKg||0;});
       if(t.sizes){(t.sizes.active||[]).forEach(sz=>{r.jamiRejaD+=Number(t.sizes.reja?.[sz])||0;r.jamiFaktD+=Number(t.sizes.fakt?.[sz])||0;});}
     });
-    r.qolganKg=r.jamiMavjud-r.jamiBichildi;
-    r.otxodPct=r.jamiBichildi>0?((r.jamiOtxod/r.jamiBichildi)*100).toFixed(1):"0";
-    r.topBoshiPct=r.jamiBichildi>0?((r.jamiTopBoshi/r.jamiBichildi)*100).toFixed(1):"0";
-    r.bichilganPct=r.jamiZakaz>0?((r.jamiDona/r.jamiZakaz)*100).toFixed(1):"0";
+    r.bichilganPct=r.jamiPartiyaKg>0?((r.jamiBichildi/r.jamiPartiyaKg)*100).toFixed(1):"0";
     r.farqDona=r.jamiRejaD-r.jamiFaktD;
     return r;
   },[allData]);
@@ -97,49 +78,19 @@ function App() {
   const trimStats=useMemo(()=>{
     return allData.map(t=>{
       const parts=t.partiyalar||[];
-      const st={bichildi:0,topBoshi:0,otxod:0,toza:0,dona:0};
-      parts.forEach(p=>{st.bichildi+=p.bichildiKg||0;st.topBoshi+=p.topBoshi||0;st.otxod+=p.otxod||0;st.toza+=p.tozaBichilgan||0;st.dona+=p.dona||0;});
-      st.qolgan=(t.mavjudKg||0)-st.bichildi;st.partCount=parts.length;st.status=parts.length>0?"active":"waiting";
+      const st={partiyaKg:0,bichildi:0,qoldiq:0,partCount:parts.length};
+      parts.forEach(p=>{st.partiyaKg+=p.partiyaKg||0;st.bichildi+=p.bichildiKg||0;st.qoldiq+=p.qoldiqKg||0;});
+      st.status=parts.length>0?"active":"waiting";
+      st.bichPct=st.partiyaKg>0?((st.bichildi/st.partiyaKg)*100).toFixed(0):"0";
       return{...t,st};
     });
   },[allData]);
 
   const openTrim=(item)=>{
-    setSelected(item);setPForm(emptyP());setEditIdx(null);
+    setSelected(item);
     if(item.sizes){setActiveSizes(item.sizes.active||[]);setReja(item.sizes.reja||{});setFakt(item.sizes.fakt||{});}
     else{setActiveSizes([]);setReja({});setFakt({});}
     setView("detail");setTab("trim");
-  };
-
-  const addPartiya=async()=>{
-    if(!pForm.partiya){flash("Partiya № kiriting");return;}
-    setSaving(true);
-    const p={...pForm,bichildiKg:+pForm.bichildiKg||0,topBoshi:+pForm.topBoshi||0,otxod:+pForm.otxod||0,tozaBichilgan:+pForm.tozaBichilgan||0,dona:+pForm.dona||0};
-    try{
-      const payload={action:"savePartiya",trimId:selected.id,mahsulot:selected.name,rangi:selected.color,...p};
-      if(editIdx!==null&&selected.partiyalar?.[editIdx]?.rowIndex)payload.rowIndex=selected.partiyalar[editIdx].rowIndex;
-      await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)});
-    }catch(e){console.error(e);}
-    setAllData(prev=>prev.map(t=>{
-      if(t.id!==selected.id)return t;
-      const parts=[...(t.partiyalar||[])];
-      if(editIdx!==null)parts[editIdx]=p;else parts.push(p);
-      const updated={...t,partiyalar:parts};setSelected(updated);return updated;
-    }));
-    setPForm(emptyP());setEditIdx(null);setView("detail");setSaving(false);
-    flash(editIdx!==null?"Saqlandi ✓":"Qo'shildi ✓");
-    setTimeout(()=>load(),1500);
-  };
-
-  const delPartiya=async(idx)=>{
-    const p=selected?.partiyalar?.[idx];
-    if(p?.rowIndex){try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"deletePartiya",rowIndex:p.rowIndex})});}catch(e){}}
-    setAllData(prev=>prev.map(t=>{
-      if(t.id!==selected.id)return t;
-      const parts=(t.partiyalar||[]).filter((_,i)=>i!==idx);
-      const updated={...t,partiyalar:parts};setSelected(updated);return updated;
-    }));
-    flash("O'chirildi ✓");setTimeout(()=>load(),1500);
   };
 
   const saveFakt=async()=>{
@@ -147,23 +98,23 @@ function App() {
     try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveFaktRazmer",trimId:selected.id,sizes:activeSizes,fakt})});}catch(e){}
     setAllData(prev=>prev.map(t=>{
       if(t.id!==selected.id)return t;
-      const oldSizes=t.sizes||{group:"harf",active:[],reja:{}};
-      return{...t,sizes:{...oldSizes,active:activeSizes,fakt}};
+      const old=t.sizes||{group:"harf",active:[],reja:{}};
+      return{...t,sizes:{...old,active:activeSizes,fakt}};
     }));
     setSaving(false);flash("Fakt saqlandi ✓");
   };
 
-  useEffect(()=>{
-    const b=+pForm.bichildiKg||0,t=+pForm.topBoshi||0,o=+pForm.otxod||0;
-    if(b>0)setPForm(prev=>({...prev,tozaBichilgan:(b-t-o).toFixed(1)}));
-  },[pForm.bichildiKg,pForm.topBoshi,pForm.otxod]);
-
   const curParts=selected?.partiyalar||[];
   const curStats=useMemo(()=>{
-    const st={bichildi:0,topBoshi:0,otxod:0,toza:0,dona:0};
-    curParts.forEach(p=>{st.bichildi+=p.bichildiKg||0;st.topBoshi+=p.topBoshi||0;st.otxod+=p.otxod||0;st.toza+=p.tozaBichilgan||0;st.dona+=p.dona||0;});
-    st.qolgan=(selected?.mavjudKg||0)-st.bichildi;return st;
-  },[curParts,selected]);
+    const st={partiyaKg:0,bichildi:0,qoldiq:0,tayyor:0,bichilgan:0};
+    curParts.forEach(p=>{
+      st.partiyaKg+=p.partiyaKg||0;st.bichildi+=p.bichildiKg||0;st.qoldiq+=p.qoldiqKg||0;
+      if((p.holat||'').includes('бичилмаган'))st.tayyor++;
+      if((p.holat||'').includes('бичилган')||p.bichildiKg>0)st.bichilgan++;
+    });
+    st.bichPct=st.partiyaKg>0?((st.bichildi/st.partiyaKg)*100).toFixed(1):"0";
+    return st;
+  },[curParts]);
 
   const totalReja=activeSizes.reduce((s,sz)=>s+(+reja[sz]||0),0);
   const totalFakt=activeSizes.reduce((s,sz)=>s+(+fakt[sz]||0),0);
@@ -177,47 +128,23 @@ function App() {
 
   const allPartiyalar=useMemo(()=>{
     const list=[];
-    allData.forEach(t=>{(t.partiyalar||[]).forEach(p=>{list.push({...p,trimId:t.id,trimName:t.name,color:t.color,orderQty:t.orderQty});});});
+    allData.forEach(t=>{(t.partiyalar||[]).forEach(p=>{list.push({...p,trimId:t.id,trimName:t.name,color:t.color});});});
     return list.sort((a,b)=>(a.sana||"").localeCompare(b.sana||"")).reverse();
   },[allData]);
 
   const sortedTrims=useMemo(()=>{
     const arr=[...trimStats];
-    arr.sort((a,b)=>{
-      let va,vb;
-      switch(sortCol){
-        case"id":va=a.id;vb=b.id;break;case"zakaz":va=a.orderQty;vb=b.orderQty;break;
-        case"mavjud":va=a.mavjudKg||0;vb=b.mavjudKg||0;break;case"bichildi":va=a.st.bichildi;vb=b.st.bichildi;break;
-        case"qolgan":va=a.st.qolgan;vb=b.st.qolgan;break;case"topBoshi":va=a.st.topBoshi;vb=b.st.topBoshi;break;
-        case"otxod":va=a.st.otxod;vb=b.st.otxod;break;case"dona":va=a.st.dona;vb=b.st.dona;break;
-        default:va=a.id;vb=b.id;
-      }
+    arr.sort((a,b)=>{let va,vb;
+      switch(sortCol){case"id":va=a.id;vb=b.id;break;case"zakaz":va=a.orderQty;vb=b.orderQty;break;
+      case"partiyaKg":va=a.st.partiyaKg;vb=b.st.partiyaKg;break;case"bichildi":va=a.st.bichildi;vb=b.st.bichildi;break;
+      case"qoldiq":va=a.st.qoldiq;vb=b.st.qoldiq;break;default:va=a.id;vb=b.id;}
       if(typeof va==="string")return sortDir==="asc"?va.localeCompare(vb):vb.localeCompare(va);
       return sortDir==="asc"?va-vb:vb-va;
-    });
-    return arr;
+    });return arr;
   },[trimStats,sortCol,sortDir]);
 
   const toggleSort=(col)=>{if(sortCol===col)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortCol(col);setSortDir("asc");}};
   const sortIcon=(col)=>sortCol===col?(sortDir==="asc"?" ↑":" ↓"):"";
-
-  // ========== ADD PARTIYA ==========
-  if(view==="addPartiya"&&selected)return(
-    <Shell tab={tab} setTab={setTab} toast={toast}>
-      <Hdr left={<Back onClick={()=>{setView("detail");setEditIdx(null);setPForm(emptyP());}}/>} title={editIdx!==null?"Tahrirlash":"Yangi partiya"}/>
-      <div style={S.infoMini}><span style={S.miniId}>{selected.id}</span><span style={S.miniClr}>{selected.color}</span></div>
-      <div style={S.card}>
-        <Row><Half><Lbl>Partiya №</Lbl><input style={S.inp} value={pForm.partiya} onChange={e=>setPForm(p=>({...p,partiya:e.target.value}))} placeholder="P-001"/></Half>
-        <Half><Lbl>Sana</Lbl><input style={S.inp} type="date" value={pForm.sana} onChange={e=>setPForm(p=>({...p,sana:e.target.value}))}/></Half></Row>
-        <Row><Half><Lbl>Bichildi кг</Lbl><NumInput style={{...S.inp,...S.inpN}} inputMode="decimal" value={pForm.bichildiKg} placeholder="0" onChange={e=>setPForm(p=>({...p,bichildiKg:e.target.value}))}/></Half>
-        <Half><Lbl>Топ боши кг</Lbl><NumInput style={{...S.inp,...S.inpN}} inputMode="decimal" value={pForm.topBoshi} placeholder="0" onChange={e=>setPForm(p=>({...p,topBoshi:e.target.value}))}/></Half></Row>
-        <Row><Half><Lbl>Отход кг</Lbl><NumInput style={{...S.inp,...S.inpN}} inputMode="decimal" value={pForm.otxod} placeholder="0" onChange={e=>setPForm(p=>({...p,otxod:e.target.value}))}/></Half>
-        <Half><Lbl>Тоза бичилган кг</Lbl><input style={{...S.inp,background:"#f0fdf4",fontWeight:700,borderColor:"#86efac"}} value={pForm.tozaBichilgan} readOnly/></Half></Row>
-        <Row><Half><Lbl>Бичилди дона</Lbl><NumInput style={{...S.inp,...S.inpN,borderColor:"#a78bfa",background:"#faf5ff"}} inputMode="numeric" value={pForm.dona} placeholder="0" onChange={e=>setPForm(p=>({...p,dona:e.target.value}))}/></Half></Row>
-        <Btn primary full style={{marginTop:18}} onClick={addPartiya} disabled={saving}>{saving?"Saqlanmoqda...":editIdx!==null?"Saqlash":"Qo'shish"}</Btn>
-      </div>
-    </Shell>
-  );
 
   // ========== RAZMER ==========
   if(view==="razmer"&&selected){
@@ -257,10 +184,10 @@ function App() {
             })}
           </tbody><tfoot><tr style={{borderTop:"2px solid #e2e8f0",background:"#f8fafc"}}>
             <td style={{...S.td,fontWeight:800,paddingLeft:14}}>Jami</td>
-            <td style={{...S.td,textAlign:"center",fontWeight:700,color:"#475569"}}>{totalReja.toLocaleString()}</td>
+            <td style={{...S.td,textAlign:"center",fontWeight:700}}>{totalReja.toLocaleString()}</td>
             <td style={{...S.td,textAlign:"center",fontWeight:700,color:"#16a34a"}}>{totalFakt.toLocaleString()}</td>
-            <td style={{...S.td,textAlign:"center",fontWeight:800,fontSize:14,color:(totalReja-totalFakt)>0?"#dc2626":"#16a34a"}}>{(totalReja-totalFakt)>0?`−${(totalReja-totalFakt).toLocaleString()}`:(totalReja-totalFakt)<0?`+${Math.abs(totalReja-totalFakt).toLocaleString()}`:"✓"}</td>
-            <td style={{...S.td,textAlign:"center",fontWeight:600,fontSize:11}}>{totalReja>0?((totalFakt/totalReja)*100).toFixed(0)+"%":"—"}</td>
+            <td style={{...S.td,textAlign:"center",fontWeight:800,color:(totalReja-totalFakt)>0?"#dc2626":"#16a34a"}}>{(totalReja-totalFakt)>0?`−${(totalReja-totalFakt).toLocaleString()}`:(totalReja-totalFakt)<0?`+${Math.abs(totalReja-totalFakt).toLocaleString()}`:"✓"}</td>
+            <td style={{...S.td,textAlign:"center",fontSize:11,fontWeight:600}}>{totalReja>0?((totalFakt/totalReja)*100).toFixed(0)+"%":"—"}</td>
           </tr></tfoot></table>
         </div>
         <Btn primary full style={{marginTop:16}} onClick={saveFakt} disabled={saving}>{saving?"Saqlanmoqda...":"Fakt saqlash"}</Btn>
@@ -271,8 +198,7 @@ function App() {
 
   // ========== DETAIL ==========
   if(view==="detail"&&selected){
-    const otxPct=curStats.bichildi>0?((curStats.otxod/curStats.bichildi)*100).toFixed(1):"0";
-    const tbPct=curStats.bichildi>0?((curStats.topBoshi/curStats.bichildi)*100).toFixed(1):"0";
+    const hasReja=activeSizes.length>0&&activeSizes.some(sz=>+reja[sz]>0);
     return(
     <Shell tab={tab} setTab={setTab} toast={toast}>
       <Hdr left={<Back onClick={()=>{setView("list");setSelected(null);setTab("trim");}}/>} title={selected.id}/>
@@ -282,47 +208,92 @@ function App() {
           <span style={{...S.dot,background:getColor(selected.color)}}/><span style={{fontSize:13,color:"#64748b"}}>{selected.color}</span>
           <span style={{color:"#cbd5e1"}}>•</span><span style={{fontSize:13,fontWeight:600}}>Zakaz: {selected.orderQty?.toLocaleString()} dona</span>
         </div>
-        <div style={{display:"flex",gap:8,marginTop:8,fontSize:12}}>
-          <span style={{color:"#2563eb",fontWeight:600}}>Mavjud: {selected.mavjudKg?.toLocaleString()} кг</span>
-          <span style={{color:"#16a34a",fontWeight:600}}>Qolgan: {curStats.qolgan.toFixed(1)} кг</span>
-        </div>
       </div>
+
+      {/* Ombor xulosasi */}
       {curParts.length>0&&(
         <div style={{...S.card,background:"#f8fafc",padding:14}}>
-          <div style={{fontSize:11,fontWeight:700,color:"#475569",marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Ombor xulosasi</div>
+          <div style={{fontSize:11,fontWeight:700,color:"#475569",marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Mato holati</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-            <SBox label="Bichildi" value={`${curStats.bichildi.toFixed(1)} кг`} color="#2563eb"/>
-            <SBox label="Тоза" value={`${curStats.toza.toFixed(1)} кг`} color="#16a34a"/>
-            <SBox label="Дона" value={curStats.dona.toLocaleString()} color="#7c3aed"/>
-            <SBox label="Топ боши" value={`${curStats.topBoshi.toFixed(1)} кг`} sub={`${tbPct}%`} color="#ea580c"/>
-            <SBox label="Отход" value={`${curStats.otxod.toFixed(1)} кг`} sub={`${otxPct}%`} color="#dc2626"/>
-            <SBox label="Қолган" value={`${curStats.qolgan.toFixed(1)} кг`} color="#0891b2"/>
+            <SBox label="Partiya кг" value={`${curStats.partiyaKg.toLocaleString()}`} color="#2563eb"/>
+            <SBox label="Бичилган кг" value={`${curStats.bichildi.toLocaleString()}`} color="#16a34a"/>
+            <SBox label="Қолдиқ кг" value={`${curStats.qoldiq.toLocaleString()}`} color="#ea580c"/>
+          </div>
+          <div style={{marginTop:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
+              <span style={{color:"#64748b"}}>Bichilish: {curStats.bichPct}%</span>
+              <span style={{color:"#64748b"}}>{curParts.length} partiya</span>
+            </div>
+            <div style={{height:8,background:"#e2e8f0",borderRadius:4,overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${Math.min(+curStats.bichPct,100)}%`,background:"linear-gradient(90deg,#2563eb,#16a34a)",borderRadius:4}}/>
+            </div>
           </div>
         </div>
       )}
-      <div style={{display:"flex",gap:8,margin:"12px 0"}}>
-        <Btn primary flex onClick={()=>setView("addPartiya")}>+ Partiya</Btn>
-        <Btn flex onClick={()=>setView("razmer")}>📐 Razmer</Btn>
-      </div>
-      <Lbl>Partiyalar ({curParts.length})</Lbl>
-      {curParts.length===0?<div style={{textAlign:"center",padding:30,color:"#94a3b8",fontSize:14}}>Partiya yo'q</div>:(
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {curParts.map((p,i)=>(
-            <div key={i} style={S.pCard}>
+
+      {/* Razmer reja qisqa ko'rinish */}
+      {hasReja&&(
+        <div style={{...S.card,padding:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:0.5}}>Razmer rejasi</div>
+            <button style={{border:"none",background:"none",color:"#2563eb",fontSize:12,fontWeight:600,cursor:"pointer"}} onClick={()=>setView("razmer")}>Batafsil →</button>
+          </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            {activeSizes.map(sz=>{
+              const r=+reja[sz]||0,f=+fakt[sz]||0;
+              const done=r>0&&f>=r;
+              return(<div key={sz} style={{padding:"6px 10px",borderRadius:8,border:"1px solid "+(done?"#86efac":"#e2e8f0"),background:done?"#f0fdf4":"#fff",fontSize:12,textAlign:"center",minWidth:55}}>
+                <div style={{fontWeight:700,color:"#334155"}}>{sz}</div>
+                <div style={{fontSize:10,color:done?"#16a34a":"#64748b"}}>{f}/{r}</div>
+              </div>);
+            })}
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:8,fontSize:12}}>
+            <span>Reja: <b>{totalReja.toLocaleString()}</b></span>
+            <span>Fakt: <b style={{color:"#16a34a"}}>{totalFakt.toLocaleString()}</b></span>
+            <span style={{color:(totalReja-totalFakt)>0?"#dc2626":"#16a34a",fontWeight:700}}>Farq: {(totalReja-totalFakt)>0?`−${(totalReja-totalFakt).toLocaleString()}`:"✓"}</span>
+          </div>
+        </div>
+      )}
+
+      {!hasReja&&(
+        <button style={{...S.card,width:"100%",textAlign:"center",cursor:"pointer",padding:14,border:"1.5px dashed #cbd5e1"}} onClick={()=>setView("razmer")}>
+          <span style={{fontSize:13,color:"#64748b"}}>📐 Razmerlar</span>
+        </button>
+      )}
+
+      {/* Partiyalar ro'yxati */}
+      <Lbl style={{marginTop:12}}>Partiyalar ({curParts.length})</Lbl>
+      {curParts.length===0?<div style={{textAlign:"center",padding:30,color:"#94a3b8",fontSize:14}}>Bu trimkarta uchun partiya yo'q</div>:(
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {curParts.map((p,i)=>{
+            const bichPct=p.partiyaKg>0?((p.bichildiKg/p.partiyaKg)*100).toFixed(0):"0";
+            const isTayyor=(p.holat||'').includes('бичилмаган');
+            return(
+            <div key={i} style={{...S.pCard,borderLeft:`3px solid ${isTayyor?"#f59e0b":p.bichildiKg>0?"#16a34a":"#e2e8f0"}`}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                <div><span style={{fontWeight:700,color:"#1e40af",fontFamily:"monospace",fontSize:14}}>{p.partiya}</span><span style={{color:"#94a3b8",fontSize:12,marginLeft:8}}>{p.sana}</span></div>
-                <div style={{display:"flex",gap:4}}>
-                  <button style={S.iBtn} onClick={()=>{setPForm({...p});setEditIdx(i);setView("addPartiya");}}>✏️</button>
-                  <button style={S.iBtn} onClick={()=>delPartiya(i)}>🗑</button>
+                <div>
+                  <span style={{fontWeight:700,color:"#1e40af",fontFamily:"monospace",fontSize:14}}>{p.partiya}</span>
+                  <span style={{color:"#94a3b8",fontSize:11,marginLeft:8}}>{p.sana}</span>
                 </div>
+                <span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:6,
+                  background:isTayyor?"#fef3c7":p.bichildiKg>0?"#dcfce7":"#f1f5f9",
+                  color:isTayyor?"#92400e":p.bichildiKg>0?"#166534":"#64748b"
+                }}>{isTayyor?"Kutmoqda":p.bichildiKg>0?"Bichilgan":"—"}</span>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:4,fontSize:12}}>
-                <MS label="Bichildi" value={`${p.bichildiKg} кг`}/><MS label="Топ боши" value={`${p.topBoshi} кг`}/>
-                <MS label="Отход" value={`${p.otxod} кг`}/><MS label="Дона" value={p.dona} accent/>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,fontSize:12}}>
+                <div><div style={{color:"#2563eb",fontWeight:700,fontSize:14}}>{p.partiyaKg.toLocaleString()} кг</div><div style={{fontSize:10,color:"#94a3b8"}}>Partiya</div></div>
+                <div><div style={{color:"#16a34a",fontWeight:700,fontSize:14}}>{p.bichildiKg.toLocaleString()} кг</div><div style={{fontSize:10,color:"#94a3b8"}}>Бичилган</div></div>
+                <div><div style={{color:"#ea580c",fontWeight:700,fontSize:14}}>{p.qoldiqKg.toLocaleString()} кг</div><div style={{fontSize:10,color:"#94a3b8"}}>Қолдиқ</div></div>
               </div>
-              <div style={{marginTop:4,fontSize:12,color:"#16a34a",fontWeight:600}}>Тоза: {p.tozaBichilgan} кг</div>
-            </div>
-          ))}
+              {p.partiyaKg>0&&(<div style={{marginTop:6}}>
+                <div style={{height:4,background:"#e2e8f0",borderRadius:2,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${Math.min(+bichPct,100)}%`,background:+bichPct>=100?"#16a34a":"#2563eb",borderRadius:2}}/>
+                </div>
+                <div style={{fontSize:10,color:"#94a3b8",marginTop:2,textAlign:"right"}}>{bichPct}% bichilgan</div>
+              </div>)}
+            </div>);
+          })}
         </div>
       )}
     </Shell>);
@@ -333,33 +304,41 @@ function App() {
     <Shell tab={tab} setTab={setTab} toast={toast}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px",borderBottom:"1px solid #e2e8f0",marginBottom:12}}>
         <h1 style={{fontSize:20,fontWeight:800,margin:0}}>📊 Dashboard</h1>
-        <button style={{border:"none",background:"none",fontSize:18,cursor:"pointer"}} onClick={load} title="Yangilash">🔄</button>
+        <button style={{border:"none",background:"none",fontSize:18,cursor:"pointer"}} onClick={load}>🔄</button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-        <KPI icon="📦" label="Jami mavjud" value={`${umumiy.jamiMavjud.toLocaleString()} кг`} color="#2563eb"/>
-        <KPI icon="✂️" label="Jami bichildi" value={`${umumiy.jamiBichildi.toLocaleString()} кг`} color="#16a34a"/>
-        <KPI icon="📏" label="Қолган mato" value={`${umumiy.qolganKg.toLocaleString()} кг`} color="#0891b2"/>
-        <KPI icon="👕" label="Jami dona" value={umumiy.jamiDona.toLocaleString()} color="#7c3aed"/>
+        <KPI icon="📦" label="Jami partiya" value={`${umumiy.jamiPartiyaKg.toLocaleString()} кг`} color="#2563eb"/>
+        <KPI icon="✂️" label="Бичилган" value={`${umumiy.jamiBichildi.toLocaleString()} кг`} color="#16a34a"/>
+        <KPI icon="📏" label="Қолдиқ" value={`${umumiy.jamiQoldiq.toLocaleString()} кг`} color="#ea580c"/>
+        <KPI icon="🧾" label="Partiyalar" value={umumiy.jamiPartiya} color="#7c3aed"/>
       </div>
-      <div style={{...S.card,background:"linear-gradient(135deg,#fef2f2,#fff7ed)",padding:14,marginBottom:12}}>
-        <div style={{fontSize:11,fontWeight:700,color:"#92400e",textTransform:"uppercase",letterSpacing:0.5,marginBottom:10}}>Chiqindlar</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-          <SBox label="Топ боши" value={`${umumiy.jamiTopBoshi.toFixed(1)} кг`} sub={`${umumiy.topBoshiPct}%`} color="#ea580c"/>
-          <SBox label="Отход" value={`${umumiy.jamiOtxod.toFixed(1)} кг`} sub={`${umumiy.otxodPct}%`} color="#dc2626"/>
-          <SBox label="Тоза" value={`${umumiy.jamiToza.toFixed(1)} кг`} color="#16a34a"/>
-        </div>
-      </div>
+
       <div style={{...S.card,padding:14,marginBottom:12}}>
-        <div style={{fontSize:11,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:0.5,marginBottom:10}}>Zakaz bajarilishi</div>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:6}}>
-          <span>Jami: <b>{umumiy.jamiZakaz.toLocaleString()}</b></span><span style={{color:"#16a34a",fontWeight:700}}>{umumiy.bichilganPct}%</span>
+          <span>Bichilish: <b>{umumiy.bichilganPct}%</b></span>
+          <span>{umumiy.trimSoni} trimkarta</span>
         </div>
         <div style={{height:10,background:"#f1f5f9",borderRadius:6,overflow:"hidden"}}>
           <div style={{height:"100%",width:`${Math.min(+umumiy.bichilganPct,100)}%`,background:"linear-gradient(90deg,#2563eb,#16a34a)",borderRadius:6}}/>
         </div>
       </div>
+
+      {umumiy.jamiRejaD>0&&(
+        <div style={{...S.card,padding:14,marginBottom:12}}>
+          <div style={{fontSize:11,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>Razmer reja / fakt</div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:6}}>
+            <span>Reja: <b>{umumiy.jamiRejaD.toLocaleString()}</b></span>
+            <span>Fakt: <b>{umumiy.jamiFaktD.toLocaleString()}</b></span>
+            <span style={{color:umumiy.farqDona>0?"#dc2626":"#16a34a",fontWeight:700}}>Farq: {umumiy.farqDona>0?`−${umumiy.farqDona.toLocaleString()}`:"✓"}</span>
+          </div>
+          <div style={{height:8,background:"#f1f5f9",borderRadius:6,overflow:"hidden"}}>
+            <div style={{height:"100%",width:`${Math.min(umumiy.jamiRejaD>0?(umumiy.jamiFaktD/umumiy.jamiRejaD)*100:0,100)}%`,background:"linear-gradient(90deg,#7c3aed,#2563eb)",borderRadius:6}}/>
+          </div>
+        </div>
+      )}
+
       <div style={{display:"flex",gap:8,marginBottom:10}}>
-        {[["all",`Hammasi (${umumiy.trimkartaSoni})`],["active",`Faol (${umumiy.activeCount})`],["waiting",`Kutmoqda (${umumiy.waitingCount})`]].map(([k,l])=>(
+        {[["all",`Hammasi (${umumiy.trimSoni})`],["active",`Faol (${umumiy.activeCount})`],["waiting",`Kutmoqda (${umumiy.waitingCount})`]].map(([k,l])=>(
           <button key={k} style={{...S.tabBtn,flex:1,fontSize:11,...(dashFilter===k?S.tabAct:{})}} onClick={()=>setDashFilter(k)}>{l}</button>
         ))}
       </div>
@@ -368,17 +347,16 @@ function App() {
           <button key={t.id} style={{...S.listItem,padding:"10px 12px"}} onClick={()=>openTrim(t)}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
               <span style={{fontWeight:700,color:"#1e40af",fontFamily:"monospace",fontSize:12}}>{t.id}</span>
-              <span style={{fontSize:11,color:t.st.status==="active"?"#16a34a":"#94a3b8",fontWeight:600}}>{t.st.status==="active"?"● Faol":"○ Kutmoqda"}</span>
+              <span style={{fontSize:11,color:t.st.status==="active"?"#16a34a":"#94a3b8",fontWeight:600}}>{t.st.status==="active"?`● ${t.st.partCount} partiya`:"○ Kutmoqda"}</span>
             </div>
             <div style={{fontSize:12,color:"#334155",marginBottom:4}}>{t.name} — <span style={{color:"#64748b"}}>{t.color}</span></div>
             {t.st.partCount>0?(
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:4,fontSize:11}}>
-                <span><b style={{color:"#2563eb"}}>{t.st.bichildi.toFixed(0)}</b> кг</span>
-                <span><b style={{color:"#0891b2"}}>{t.st.qolgan.toFixed(0)}</b> қолган</span>
-                <span><b style={{color:"#dc2626"}}>{t.st.otxod.toFixed(1)}</b> отход</span>
-                <span><b style={{color:"#7c3aed"}}>{t.st.dona}</b> дона</span>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4,fontSize:11}}>
+                <span><b style={{color:"#2563eb"}}>{t.st.partiyaKg.toLocaleString()}</b> кг</span>
+                <span><b style={{color:"#16a34a"}}>{t.st.bichildi.toLocaleString()}</b> бичилган</span>
+                <span><b style={{color:"#ea580c"}}>{t.st.qoldiq.toLocaleString()}</b> қолдиқ</span>
               </div>
-            ):(<div style={{fontSize:11,color:"#94a3b8"}}>Mavjud: {t.mavjudKg?.toLocaleString()} кг</div>)}
+            ):(<div style={{fontSize:11,color:"#94a3b8"}}>Zakaz: {t.orderQty?.toLocaleString()} dona</div>)}
           </button>
         ))}
       </div>
@@ -393,20 +371,18 @@ function App() {
       </div>
       <div style={S.tabs}>
         <button style={{...S.tabBtn,...(hisobotTab==="trim"?S.tabAct:{})}} onClick={()=>setHisobotTab("trim")}>Trimkarta</button>
-        <button style={{...S.tabBtn,...(hisobotTab==="partiya"?S.tabAct:{})}} onClick={()=>setHisobotTab("partiya")}>Partiya</button>
+        <button style={{...S.tabBtn,...(hisobotTab==="partiya"?S.tabAct:{})}} onClick={()=>setHisobotTab("partiya")}>Partiyalar</button>
       </div>
       {hisobotTab==="trim"?(
         <div style={{overflowX:"auto",borderRadius:12,border:"1px solid #e2e8f0",marginTop:10}}>
-          <table style={{...S.tbl,minWidth:700}}><thead><tr style={{background:"#f1f5f9"}}>
+          <table style={{...S.tbl,minWidth:600}}><thead><tr style={{background:"#f1f5f9"}}>
             <th style={S.rth} onClick={()=>toggleSort("id")}>Trim{sortIcon("id")}</th>
             <th style={{...S.rth,minWidth:120}}>Mahsulot</th><th style={S.rth}>Rangi</th>
             <th style={S.rth} onClick={()=>toggleSort("zakaz")}>Zakaz{sortIcon("zakaz")}</th>
-            <th style={S.rth} onClick={()=>toggleSort("mavjud")}>Mavjud{sortIcon("mavjud")}</th>
-            <th style={S.rth} onClick={()=>toggleSort("bichildi")}>Bichildi{sortIcon("bichildi")}</th>
-            <th style={S.rth} onClick={()=>toggleSort("qolgan")}>Qolgan{sortIcon("qolgan")}</th>
-            <th style={S.rth} onClick={()=>toggleSort("topBoshi")}>Т.боши{sortIcon("topBoshi")}</th>
-            <th style={S.rth} onClick={()=>toggleSort("otxod")}>Отход{sortIcon("otxod")}</th>
-            <th style={S.rth} onClick={()=>toggleSort("dona")}>Дона{sortIcon("dona")}</th>
+            <th style={S.rth} onClick={()=>toggleSort("partiyaKg")}>Partiya кг{sortIcon("partiyaKg")}</th>
+            <th style={S.rth} onClick={()=>toggleSort("bichildi")}>Бичилган{sortIcon("bichildi")}</th>
+            <th style={S.rth} onClick={()=>toggleSort("qoldiq")}>Қолдиқ{sortIcon("qoldiq")}</th>
+            <th style={S.rth}>%</th>
           </tr></thead><tbody>
             {sortedTrims.map(t=>(
               <tr key={t.id} style={{cursor:"pointer"}} onClick={()=>openTrim(t)}>
@@ -414,52 +390,46 @@ function App() {
                 <td style={{...S.rtd,fontSize:11,maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.name}</td>
                 <td style={S.rtd}>{t.color}</td>
                 <td style={{...S.rtd,fontWeight:600}}>{t.orderQty?.toLocaleString()}</td>
-                <td style={{...S.rtd,color:"#2563eb"}}>{(t.mavjudKg||0).toLocaleString()}</td>
-                <td style={{...S.rtd,color:"#16a34a",fontWeight:600}}>{t.st.bichildi>0?t.st.bichildi.toFixed(1):"—"}</td>
-                <td style={{...S.rtd,color:"#0891b2"}}>{t.st.bichildi>0?t.st.qolgan.toFixed(1):"—"}</td>
-                <td style={{...S.rtd,color:"#ea580c"}}>{t.st.topBoshi>0?t.st.topBoshi.toFixed(1):"—"}</td>
-                <td style={{...S.rtd,color:"#dc2626"}}>{t.st.otxod>0?t.st.otxod.toFixed(1):"—"}</td>
-                <td style={{...S.rtd,fontWeight:700,color:"#7c3aed"}}>{t.st.dona>0?t.st.dona.toLocaleString():"—"}</td>
+                <td style={{...S.rtd,color:"#2563eb",fontWeight:600}}>{t.st.partiyaKg>0?t.st.partiyaKg.toLocaleString():"—"}</td>
+                <td style={{...S.rtd,color:"#16a34a",fontWeight:600}}>{t.st.bichildi>0?t.st.bichildi.toLocaleString():"—"}</td>
+                <td style={{...S.rtd,color:"#ea580c"}}>{t.st.qoldiq>0?t.st.qoldiq.toLocaleString():"—"}</td>
+                <td style={S.rtd}>{t.st.partiyaKg>0?<span style={{padding:"2px 6px",borderRadius:6,fontSize:10,fontWeight:600,background:+t.st.bichPct>=100?"#dcfce7":+t.st.bichPct>=50?"#fef9c3":"#fee2e2",color:+t.st.bichPct>=100?"#166534":+t.st.bichPct>=50?"#854d0e":"#991b1b"}}>{t.st.bichPct}%</span>:"—"}</td>
               </tr>
             ))}
           </tbody><tfoot><tr style={{background:"#f8fafc",borderTop:"2px solid #cbd5e1"}}>
             <td style={{...S.rtd,fontWeight:800}} colSpan={3}>JAMI</td>
             <td style={{...S.rtd,fontWeight:700}}>{umumiy.jamiZakaz.toLocaleString()}</td>
-            <td style={{...S.rtd,fontWeight:700,color:"#2563eb"}}>{umumiy.jamiMavjud.toLocaleString()}</td>
-            <td style={{...S.rtd,fontWeight:700,color:"#16a34a"}}>{umumiy.jamiBichildi.toFixed(1)}</td>
-            <td style={{...S.rtd,fontWeight:700,color:"#0891b2"}}>{umumiy.qolganKg.toFixed(1)}</td>
-            <td style={{...S.rtd,fontWeight:700,color:"#ea580c"}}>{umumiy.jamiTopBoshi.toFixed(1)}</td>
-            <td style={{...S.rtd,fontWeight:700,color:"#dc2626"}}>{umumiy.jamiOtxod.toFixed(1)}</td>
-            <td style={{...S.rtd,fontWeight:800,color:"#7c3aed"}}>{umumiy.jamiDona.toLocaleString()}</td>
+            <td style={{...S.rtd,fontWeight:700,color:"#2563eb"}}>{umumiy.jamiPartiyaKg.toLocaleString()}</td>
+            <td style={{...S.rtd,fontWeight:700,color:"#16a34a"}}>{umumiy.jamiBichildi.toLocaleString()}</td>
+            <td style={{...S.rtd,fontWeight:700,color:"#ea580c"}}>{umumiy.jamiQoldiq.toLocaleString()}</td>
+            <td style={{...S.rtd,fontWeight:700}}>{umumiy.bichilganPct}%</td>
           </tr></tfoot></table>
         </div>
       ):(
         <div style={{overflowX:"auto",borderRadius:12,border:"1px solid #e2e8f0",marginTop:10}}>
-          <table style={{...S.tbl,minWidth:700}}><thead><tr style={{background:"#f1f5f9"}}>
+          <table style={{...S.tbl,minWidth:600}}><thead><tr style={{background:"#f1f5f9"}}>
             <th style={S.rth}>Sana</th><th style={S.rth}>Partiya</th><th style={S.rth}>Trim</th>
-            <th style={S.rth}>Rangi</th><th style={S.rth}>Bichildi</th><th style={S.rth}>Т.боши</th>
-            <th style={S.rth}>Отход</th><th style={S.rth}>Тоза</th><th style={S.rth}>Дона</th>
+            <th style={S.rth}>Rangi</th><th style={S.rth}>Partiya кг</th><th style={S.rth}>Бичилган</th><th style={S.rth}>Қолдиқ</th><th style={S.rth}>Холат</th>
           </tr></thead><tbody>
-            {allPartiyalar.map((p,i)=>(
-              <tr key={i}>
+            {allPartiyalar.map((p,i)=>{
+              const isTayyor=(p.holat||'').includes('бичилмаган');
+              return(<tr key={i}>
                 <td style={{...S.rtd,whiteSpace:"nowrap"}}>{p.sana}</td>
                 <td style={{...S.rtd,fontWeight:700,color:"#1e40af",fontFamily:"monospace"}}>{p.partiya}</td>
                 <td style={{...S.rtd,fontFamily:"monospace",fontSize:11}}>{p.trimId}</td>
-                <td style={S.rtd}>{p.color}</td>
-                <td style={{...S.rtd,color:"#2563eb",fontWeight:600}}>{p.bichildiKg}</td>
-                <td style={{...S.rtd,color:"#ea580c"}}>{p.topBoshi}</td>
-                <td style={{...S.rtd,color:"#dc2626"}}>{p.otxod}</td>
-                <td style={{...S.rtd,color:"#16a34a",fontWeight:600}}>{p.tozaBichilgan}</td>
-                <td style={{...S.rtd,fontWeight:700,color:"#7c3aed"}}>{p.dona}</td>
-              </tr>
-            ))}
+                <td style={S.rtd}>{p.rangi||p.color}</td>
+                <td style={{...S.rtd,color:"#2563eb",fontWeight:600}}>{p.partiyaKg?.toLocaleString()}</td>
+                <td style={{...S.rtd,color:"#16a34a",fontWeight:600}}>{p.bichildiKg?.toLocaleString()}</td>
+                <td style={{...S.rtd,color:"#ea580c"}}>{p.qoldiqKg?.toLocaleString()}</td>
+                <td style={S.rtd}><span style={{fontSize:10,fontWeight:600,padding:"2px 6px",borderRadius:6,background:isTayyor?"#fef3c7":"#dcfce7",color:isTayyor?"#92400e":"#166534"}}>{isTayyor?"Kutmoqda":"Bichilgan"}</span></td>
+              </tr>);
+            })}
           </tbody><tfoot><tr style={{background:"#f8fafc",borderTop:"2px solid #cbd5e1"}}>
             <td style={{...S.rtd,fontWeight:800}} colSpan={4}>JAMI ({allPartiyalar.length})</td>
-            <td style={{...S.rtd,fontWeight:700,color:"#2563eb"}}>{umumiy.jamiBichildi.toFixed(1)}</td>
-            <td style={{...S.rtd,fontWeight:700,color:"#ea580c"}}>{umumiy.jamiTopBoshi.toFixed(1)}</td>
-            <td style={{...S.rtd,fontWeight:700,color:"#dc2626"}}>{umumiy.jamiOtxod.toFixed(1)}</td>
-            <td style={{...S.rtd,fontWeight:700,color:"#16a34a"}}>{umumiy.jamiToza.toFixed(1)}</td>
-            <td style={{...S.rtd,fontWeight:800,color:"#7c3aed"}}>{umumiy.jamiDona.toLocaleString()}</td>
+            <td style={{...S.rtd,fontWeight:700,color:"#2563eb"}}>{umumiy.jamiPartiyaKg.toLocaleString()}</td>
+            <td style={{...S.rtd,fontWeight:700,color:"#16a34a"}}>{umumiy.jamiBichildi.toLocaleString()}</td>
+            <td style={{...S.rtd,fontWeight:700,color:"#ea580c"}}>{umumiy.jamiQoldiq.toLocaleString()}</td>
+            <td style={S.rtd}></td>
           </tr></tfoot></table>
         </div>
       )}
@@ -521,21 +491,14 @@ function Shell({children,tab,setTab,toast}){
     <Toast msg={toast}/>
   </div>);
 }
-function Hdr({left,title,right}){return(<div style={{display:"flex",alignItems:"center",padding:"14px 0 10px",borderBottom:"1px solid #e2e8f0",marginBottom:12,position:"sticky",top:0,background:"#fff",zIndex:10}}><div style={{width:60}}>{left}</div><h2 style={{flex:1,textAlign:"center",fontSize:16,fontWeight:700,margin:0}}>{title}</h2><div style={{width:60,textAlign:"right"}}>{right}</div></div>);}
+function Hdr({left,title}){return(<div style={{display:"flex",alignItems:"center",padding:"14px 0 10px",borderBottom:"1px solid #e2e8f0",marginBottom:12,position:"sticky",top:0,background:"#fff",zIndex:10}}><div style={{width:60}}>{left}</div><h2 style={{flex:1,textAlign:"center",fontSize:16,fontWeight:700,margin:0}}>{title}</h2><div style={{width:60}}></div></div>);}
 function Back({onClick}){return <button style={{border:"none",background:"none",color:"#2563eb",fontWeight:500,fontSize:14,cursor:"pointer",padding:0}} onClick={onClick}>← Ortga</button>;}
 function Btn({children,primary,flex,full,style={},...r}){return <button style={{padding:"11px 18px",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer",border:"none",...(primary?{background:"#2563eb",color:"#fff"}:{background:"transparent",color:"#2563eb",border:"1.5px solid #2563eb"}),...(flex?{flex:1}:{}),...(full?{width:"100%"}:{}),...style}} {...r}>{children}</button>;}
 function Lbl({children,style={}}){return <div style={{fontSize:12,fontWeight:600,color:"#475569",marginBottom:6,...style}}>{children}</div>;}
-function Row({children}){return <div style={{display:"flex",gap:10,marginBottom:10}}>{children}</div>;}
-function Half({children}){return <div style={{flex:1}}>{children}</div>;}
-function SBox({label,value,sub,color}){return <div style={{textAlign:"center",padding:"8px 4px",borderRadius:8,background:"#fff",border:"1px solid #e2e8f0"}}><div style={{fontSize:13,fontWeight:700,color}}>{value}</div><div style={{fontSize:10,color:"#94a3b8",marginTop:1}}>{label}</div>{sub&&<div style={{fontSize:10,color,marginTop:1}}>{sub}</div>}</div>;}
-function MS({label,value,accent}){return <div style={{textAlign:"center"}}><div style={{fontSize:12,fontWeight:accent?700:500,color:accent?"#7c3aed":"#334155"}}>{value}</div><div style={{fontSize:10,color:"#94a3b8"}}>{label}</div></div>;}
+function SBox({label,value,color}){return <div style={{textAlign:"center",padding:"8px 4px",borderRadius:8,background:"#fff",border:"1px solid #e2e8f0"}}><div style={{fontSize:15,fontWeight:700,color}}>{value}</div><div style={{fontSize:10,color:"#94a3b8",marginTop:1}}>{label}</div></div>;}
 function KPI({icon,label,value,color}){return <div style={{padding:"14px 12px",border:"1px solid #e2e8f0",borderRadius:12,background:"#fff"}}><div style={{fontSize:18,marginBottom:4}}>{icon}</div><div style={{fontSize:17,fontWeight:800,color}}>{value}</div><div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{label}</div></div>;}
 function Toast({msg}){if(!msg)return null;return <div style={{position:"fixed",bottom:60,left:"50%",transform:"translateX(-50%)",padding:"10px 24px",background:"#1e293b",color:"#fff",borderRadius:10,fontSize:14,fontWeight:500,zIndex:100,boxShadow:"0 4px 20px rgba(0,0,0,0.2)"}}>{msg}</div>;}
-
-function getColor(n){
-  const m={"бежевый":"#d4a574","бордовый":"#800020","красный":"#dc2626","серый":"#9ca3af","графит":"#4b5563","коричневый":"#8b4513","хаки":"#6b7c3f","черный":"#1e1e1e","белый":"#e5e5e5","синий":"#2563eb","голубой":"#38bdf8","розовый":"#f472b6","фиолетовый":"#7c3aed","молочный":"#fffdd0"};
-  const l=(n||"").toLowerCase();for(const[k,v] of Object.entries(m))if(l.includes(k))return v;return"#94a3b8";
-}
+function getColor(n){const m={"бежевый":"#d4a574","бордовый":"#800020","красный":"#dc2626","серый":"#9ca3af","графит":"#4b5563","коричневый":"#8b4513","хаки":"#6b7c3f","черный":"#1e1e1e","белый":"#e5e5e5","синий":"#2563eb","голубой":"#38bdf8","розовый":"#f472b6","фиолетовый":"#7c3aed","молочный":"#fffdd0","светло":"#d1d5db"};const l=(n||"").toLowerCase();for(const[k,v] of Object.entries(m))if(l.includes(k))return v;return"#94a3b8";}
 
 const S={
   card:{padding:16,border:"1px solid #e2e8f0",borderRadius:14,marginBottom:8,background:"#fff"},
@@ -548,7 +511,6 @@ const S={
   searchInp:{width:"100%",padding:"11px 14px",fontSize:14,border:"1px solid #e2e8f0",borderRadius:10,outline:"none",boxSizing:"border-box",background:"#f8fafc"},
   listItem:{display:"block",width:"100%",textAlign:"left",padding:"13px 16px",border:"1px solid #e2e8f0",borderRadius:12,background:"#fff",cursor:"pointer"},
   pCard:{padding:"12px 14px",border:"1px solid #e2e8f0",borderRadius:12,background:"#fff"},
-  iBtn:{border:"none",background:"none",fontSize:14,cursor:"pointer",padding:"2px 6px"},
   infoMini:{display:"flex",alignItems:"center",gap:10,padding:"8px 14px",background:"#f8fafc",borderRadius:10,border:"1px solid #e2e8f0",marginBottom:12},
   miniId:{fontWeight:700,color:"#1e40af",fontFamily:"monospace",fontSize:13},
   miniClr:{fontSize:12,color:"#64748b"},
