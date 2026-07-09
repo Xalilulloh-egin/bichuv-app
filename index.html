@@ -356,36 +356,6 @@ function App(){
         </div>
       )}
 
-      {/* Razmer reja qisqa ko'rinish */}
-      {hasReja&&(
-        <div style={{...S.card,padding:14}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <div style={{fontSize:11,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:0.5}}>Razmer rejasi</div>
-          </div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-            {activeSizes.map(sz=>{
-              const r=+reja[sz]||0,f=+fakt[sz]||0;
-              const done=r>0&&f>=r;
-              return(<div key={sz} style={{padding:"6px 10px",borderRadius:8,border:"1px solid "+(done?"#86efac":"#e2e8f0"),background:done?"#f0fdf4":"#fff",fontSize:12,textAlign:"center",minWidth:55}}>
-                <div style={{fontWeight:700,color:"#334155"}}>{sz}</div>
-                <div style={{fontSize:10,color:done?"#16a34a":"#64748b"}}>{f}/{r}</div>
-              </div>);
-            })}
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",marginTop:8,fontSize:12}}>
-            <span>Reja: <b>{totalReja.toLocaleString()}</b></span>
-            <span>Fakt: <b style={{color:"#16a34a"}}>{totalFakt.toLocaleString()}</b></span>
-            <span style={{color:(totalReja-totalFakt)>0?"#dc2626":"#16a34a",fontWeight:700}}>Farq: {(totalReja-totalFakt)>0?`−${(totalReja-totalFakt).toLocaleString()}`:"✓"}</span>
-          </div>
-        </div>
-      )}
-
-      {!hasReja&&(
-        <button style={{...S.card,width:"100%",textAlign:"center",cursor:"pointer",padding:14,border:"1.5px dashed #cbd5e1"}} onClick={()=>setView("razmer")}>
-          <span style={{fontSize:13,color:"#64748b"}}>📐 Razmerlar</span>
-        </button>
-      )}
-
       {/* Partiyalar ro'yxati */}
       <Lbl style={{marginTop:12}}>Partiyalar ({curParts.length})</Lbl>
       {curParts.length===0?<div style={{textAlign:"center",padding:30,color:"#94a3b8",fontSize:14}}>Bu trimkarta uchun partiya yo'q</div>:(
