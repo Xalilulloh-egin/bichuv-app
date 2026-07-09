@@ -214,17 +214,21 @@ function App(){
       {hasReja&&(
         <div style={S.card}>
           <div style={{fontSize:11,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:0.5,marginBottom:10}}>Razmer bo'yicha dona</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4,marginBottom:10,padding:8,background:"#f8fafc",borderRadius:8}}>
+            <div style={{fontSize:10,fontWeight:600,color:"#94a3b8",textAlign:"center"}}>RAZMER</div>
+            <div style={{fontSize:10,fontWeight:600,color:"#2563eb",textAlign:"center"}}>📋 REJA</div>
+            <div style={{fontSize:10,fontWeight:600,color:"#16a34a",textAlign:"center"}}>✅ FAKT</div>
+          </div>
           {activeSizes.map(sz=>{
             const r=+reja[sz]||0,f=+fakt[sz]||0,d=r-f;
-            return(<div key={sz} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-              <span style={{width:45,fontSize:15,fontWeight:700,textAlign:"center"}}>{sz}</span>
-              <NumInput style={{...S.inp,...S.inpN,flex:1,fontSize:16,borderColor:"#86efac",background:f>0?"#f0fdf4":"#fff",color:"#166534"}}
+            return(<div key={sz} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4,alignItems:"center",marginBottom:6}}>
+              <div style={{fontSize:16,fontWeight:800,textAlign:"center",color:"#334155"}}>{sz}</div>
+              <div style={{textAlign:"center",padding:"8px 4px",background:"#eff6ff",borderRadius:8,border:"1px solid #dbeafe"}}>
+                <div style={{fontSize:18,fontWeight:800,color:"#2563eb"}}>{r}</div>
+              </div>
+              <NumInput style={{...S.inp,...S.inpN,fontSize:18,fontWeight:700,padding:8,borderColor:f>0?"#86efac":"#e2e8f0",background:f>0?"#f0fdf4":"#fff",color:"#166534"}}
                 inputMode="numeric" value={fakt[sz]||""} placeholder="0"
                 onChange={e=>setFakt(p=>({...p,[sz]:e.target.value}))}/>
-              <div style={{width:65,textAlign:"right"}}>
-                <div style={{fontSize:10,color:"#94a3b8"}}>reja: {r}</div>
-                <div style={{fontSize:11,fontWeight:700,color:d>0?"#dc2626":d<=0?"#16a34a":"#94a3b8"}}>{d>0?`−${d}`:"✓"}</div>
-              </div>
             </div>);
           })}
           <div style={{display:"flex",justifyContent:"space-between",paddingTop:8,borderTop:"1px solid #e2e8f0",fontSize:12}}>
