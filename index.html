@@ -213,24 +213,36 @@ function App(){
       {/* RAZMER bo'limi */}
       {hasReja&&(
         <div style={S.card}>
-          <div style={{fontSize:11,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:0.5,marginBottom:10}}>Razmer bo'yicha dona</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4,marginBottom:10,padding:8,background:"#f8fafc",borderRadius:8}}>
-            <div style={{fontSize:10,fontWeight:600,color:"#94a3b8",textAlign:"center"}}>RAZMER</div>
-            <div style={{fontSize:10,fontWeight:600,color:"#2563eb",textAlign:"center"}}>📋 REJA</div>
-            <div style={{fontSize:10,fontWeight:600,color:"#16a34a",textAlign:"center"}}>✅ FAKT</div>
+          <div style={{fontSize:11,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>Razmer bo'yicha dona</div>
+          <div style={{border:"1px solid #e2e8f0",borderRadius:10,overflow:"hidden"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr style={{background:"#f1f5f9"}}>
+                <th style={{padding:"8px 6px",fontSize:11,fontWeight:700,color:"#475569",textAlign:"center",width:50}}>Razmer</th>
+                <th style={{padding:"8px 6px",fontSize:11,fontWeight:700,color:"#2563eb",textAlign:"center"}}>Reja</th>
+                <th style={{padding:"8px 6px",fontSize:11,fontWeight:700,color:"#16a34a",textAlign:"center"}}>Fakt</th>
+                <th style={{padding:"8px 6px",fontSize:11,fontWeight:700,color:"#64748b",textAlign:"center",width:55}}>Farq</th>
+              </tr></thead>
+              <tbody>{activeSizes.map(sz=>{
+                const r=+reja[sz]||0,f=+fakt[sz]||0,d=r-f;
+                return(<tr key={sz} style={{borderTop:"1px solid #f1f5f9"}}>
+                  <td style={{padding:"6px",textAlign:"center",fontWeight:800,fontSize:15}}>{sz}</td>
+                  <td style={{padding:"6px",textAlign:"center",fontSize:16,fontWeight:700,color:"#2563eb",background:"#f8fafc"}}>{r}</td>
+                  <td style={{padding:"4px 6px",textAlign:"center"}}>
+                    <NumInput style={{width:"100%",padding:"8px 4px",fontSize:16,fontWeight:700,textAlign:"center",border:"1.5px solid #86efac",borderRadius:8,background:f>0?"#f0fdf4":"#fff",color:"#166534",outline:"none",boxSizing:"border-box"}}
+                      inputMode="numeric" value={fakt[sz]||""} placeholder="0"
+                      onChange={e=>setFakt(p=>({...p,[sz]:e.target.value}))}/>
+                  </td>
+                  <td style={{padding:"6px",textAlign:"center",fontWeight:700,fontSize:14,color:d>0?"#dc2626":d<=0?"#16a34a":"#94a3b8"}}>{d>0?`−${d}`:d<0?`+${Math.abs(d)}`:"✓"}</td>
+                </tr>);
+              })}</tbody>
+              <tfoot><tr style={{borderTop:"2px solid #e2e8f0",background:"#f8fafc"}}>
+                <td style={{padding:"8px 6px",fontWeight:800,textAlign:"center",fontSize:12}}>Jami</td>
+                <td style={{padding:"8px 6px",fontWeight:700,textAlign:"center",color:"#2563eb",fontSize:14}}>{totalReja.toLocaleString()}</td>
+                <td style={{padding:"8px 6px",fontWeight:700,textAlign:"center",color:"#16a34a",fontSize:14}}>{rTotalFakt.toLocaleString()}</td>
+                <td style={{padding:"8px 6px",fontWeight:800,textAlign:"center",fontSize:13,color:(totalReja-rTotalFakt)>0?"#dc2626":"#16a34a"}}>{(totalReja-rTotalFakt)>0?`−${(totalReja-rTotalFakt).toLocaleString()}`:"✓"}</td>
+              </tr></tfoot>
+            </table>
           </div>
-          {activeSizes.map(sz=>{
-            const r=+reja[sz]||0,f=+fakt[sz]||0,d=r-f;
-            return(<div key={sz} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4,alignItems:"center",marginBottom:6}}>
-              <div style={{fontSize:16,fontWeight:800,textAlign:"center",color:"#334155"}}>{sz}</div>
-              <div style={{textAlign:"center",padding:"8px 4px",background:"#eff6ff",borderRadius:8,border:"1px solid #dbeafe"}}>
-                <div style={{fontSize:18,fontWeight:800,color:"#2563eb"}}>{r}</div>
-              </div>
-              <NumInput style={{...S.inp,...S.inpN,fontSize:18,fontWeight:700,padding:8,borderColor:f>0?"#86efac":"#e2e8f0",background:f>0?"#f0fdf4":"#fff",color:"#166534"}}
-                inputMode="numeric" value={fakt[sz]||""} placeholder="0"
-                onChange={e=>setFakt(p=>({...p,[sz]:e.target.value}))}/>
-            </div>);
-          })}
           <div style={{display:"flex",justifyContent:"space-between",paddingTop:8,borderTop:"1px solid #e2e8f0",fontSize:12}}>
             <span>Reja: <b>{totalReja.toLocaleString()}</b></span>
             <span>Fakt: <b style={{color:"#16a34a"}}>{rTotalFakt.toLocaleString()}</b></span>
