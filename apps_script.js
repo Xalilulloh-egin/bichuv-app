@@ -46,6 +46,7 @@ function onEdit(e) {
 function doGet(e) {
   const action = e.parameter.action;
   if (action === 'getAllData') return json(getAllData());
+  if (action === 'debug') return json(debugSheets());
   return json({ status:'error', message:'Unknown action' });
 }
 
@@ -53,6 +54,37 @@ function doPost(e) {
   const data = JSON.parse(e.postData.contents);
   if (data.action === 'saveFaktRazmer') return json(saveFaktRazmer(data));
   return json({ status:'error', message:'Unknown action' });
+}
+
+// ===== DEBUG =====
+function debugSheets() {
+  const ss = SpreadsheetApp.openById(SS_ID);
+  const sheets = ss.getSheets().map(s => s.getName());
+  
+  const trimSheet = ss.getSheetByName('Тримкарталар') || ss.getSheetByName('ТРИМКАРТА РЎЙХАТИ') || ss.getSheets()[0];
+  const td = trimSheet.getDataRange().getValues();
+  const trimSample = [];
+  for (let i = 0; i < Math.min(5, td.length); i++) {
+    trimSample.push(td[i].slice(0,4).map(c => String(c).substring(0,30)));
+  }
+  
+  const partSheet = ss.getSheetByName('Партиялар');
+  const partInfo = { found: !!partSheet, totalRows: 0, sample: [], b26_163: [] };
+  if (partSheet) {
+    const pd = partSheet.getDataRange().getValues();
+    partInfo.totalRows = pd.length;
+    for (let i = 0; i < Math.min(6, pd.length); i++) {
+      partInfo.sample.push(pd[i].slice(0,8).map(c => String(c).substring(0,30)));
+    }
+    for (let i = 0; i < pd.length; i++) {
+      if (String(pd[i][1]).trim() === 'B26-163') {
+        partInfo.b26_163.push({ row:i, d: pd[i].slice(0,8).map(c => String(c).substring(0,25)) });
+        if (partInfo.b26_163.length >= 3) break;
+      }
+    }
+  }
+  
+  return { status:'ok', sheets, trimSheet: trimSheet.getName(), trimSample, partInfo };
 }
 
 // ===== GET ALL DATA =====
