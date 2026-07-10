@@ -176,7 +176,7 @@ function getAllData() {
     }
   }
 
-  // 3. RAZMERLAR REJASI — A=Trimkarta | B=SizeGroup | C=Razmer | D=Reja soni
+  // 3. RAZMERLAR REJASI — A=Trimkarta | B=SizeGroup | C=Razmer | D=Reja soni | E=Fakt soni
   const rejaSheet = ss.getSheetByName('Razmerlar rejasi') || ss.getSheetByName('Таблица2');
   const rejaMap = {};
   if (rejaSheet) {
@@ -185,27 +185,14 @@ function getAllData() {
       const trimId = String(rd[i][0]).trim();
       const group = String(rd[i][1]||'').trim();
       const size = String(rd[i][2]).trim();
-      const qty = parseNum(rd[i][3]);
+      const rejaQty = parseNum(rd[i][3]);           // D - Reja soni
+      const faktQty = parseNum(rd[i][4]);            // E - Fakt soni
       if (!trimId || !size) continue;
       const sg = group || getSizeGroup(size);
-      if (!rejaMap[trimId]) rejaMap[trimId] = { sizes: [], reja: {}, sizeGroup: sg };
+      if (!rejaMap[trimId]) rejaMap[trimId] = { sizes: [], reja: {}, fakt: {}, sizeGroup: sg };
       rejaMap[trimId].sizes.push(size);
-      rejaMap[trimId].reja[size] = qty;
-    }
-  }
-
-  // 4. RAZMERLAR FAKT
-  const faktRazSheet = ss.getSheetByName('Razmerlar fakt');
-  const faktRazMap = {};
-  if (faktRazSheet) {
-    const frd = faktRazSheet.getDataRange().getValues();
-    for (let i = 1; i < frd.length; i++) {
-      const trimId = String(frd[i][0]).trim();
-      const size = String(frd[i][1]).trim();
-      const qty = parseNum(frd[i][2]);
-      if (!trimId || !size) continue;
-      if (!faktRazMap[trimId]) faktRazMap[trimId] = {};
-      faktRazMap[trimId][size] = qty;
+      rejaMap[trimId].reja[size] = rejaQty;
+      rejaMap[trimId].fakt[size] = faktQty;
     }
   }
 
@@ -214,7 +201,7 @@ function getAllData() {
     const r = rejaMap[t.id];
     let sizes = null;
     if (r) {
-      sizes = { group: r.sizeGroup, active: r.sizes, reja: r.reja, fakt: faktRazMap[t.id] || {} };
+      sizes = { group: r.sizeGroup, active: r.sizes, reja: r.reja, fakt: r.fakt };
     }
     return { ...t, partiyalar: partiyalar[t.id] || [], sizes };
   });
@@ -222,30 +209,22 @@ function getAllData() {
   return { status: 'ok', data: result };
 }
 
-// ===== SAVE FAKT RAZMER =====
+// ===== SAVE FAKT RAZMER — E ustuniga yozish =====
 function saveFaktRazmer(data) {
   const ss = SpreadsheetApp.openById(SS_ID);
-  let sheet = ss.getSheetByName('Razmerlar fakt');
-  if (!sheet) {
-    sheet = ss.insertSheet('Razmerlar fakt');
-    sheet.getRange(1, 1, 1, 4).setValues([['Trimkarta', 'Razmer', 'Fakt', 'Sana']]);
-    sheet.getRange(1, 1, 1, 4).setFontWeight('bold');
-    sheet.setFrozenRows(1);
+  const sheet = ss.getSheetByName('Razmerlar rejasi') || ss.getSheetByName('Таблица2');
+  if (!sheet) return { status:'error', message:'Razmerlar rejasi topilmadi' };
+  
+  const rd = sheet.getDataRange().getValues();
+  for (let i = 1; i < rd.length; i++) {
+    const trimId = String(rd[i][0]).trim();
+    const size = String(rd[i][2]).trim();
+    if (trimId === data.trimId && size) {
+      const faktVal = Number(data.fakt[size]) || 0;
+      sheet.getRange(i + 1, 5).setValue(faktVal); // E ustuni (5-chi ustun)
+    }
   }
-  const existing = sheet.getDataRange().getValues();
-  for (let i = existing.length - 1; i >= 1; i--) {
-    if (String(existing[i][0]).trim() === data.trimId) sheet.deleteRow(i + 1);
-  }
-  const sizes = data.sizes || [];
-  const today = Utilities.formatDate(new Date(), 'Asia/Tashkent', 'yyyy-MM-dd');
-  const rows = [];
-  sizes.forEach(sz => {
-    const f = Number(data.fakt[sz]) || 0;
-    if (f > 0) rows.push([data.trimId, sz, f, today]);
-  });
-  if (rows.length > 0) {
-    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
-  }
+  
   return { status: 'ok' };
 }
 

@@ -386,8 +386,10 @@ function App(){
                 </div>
                 <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
                   <div style={{fontSize:10,color:"#94a3b8"}}>{bichPct}% bichilgan</div>
-                  <button style={{border:"none",background:"#2563eb",color:"#fff",fontSize:11,fontWeight:600,padding:"3px 12px",borderRadius:6,cursor:"pointer"}}
-                    onClick={(e)=>{e.stopPropagation();openBichForm(p);}}>✂️ Bichish</button>
+                  {hasReja?
+                    <button style={{border:"none",background:"#2563eb",color:"#fff",fontSize:11,fontWeight:600,padding:"3px 12px",borderRadius:6,cursor:"pointer"}}
+                      onClick={(e)=>{e.stopPropagation();openBichForm(p);}}>✂️ Bichish</button>
+                    :<span style={{fontSize:10,color:"#dc2626"}}>Reja kerak</span>}
                 </div>
               </div>)}
             </div>);
