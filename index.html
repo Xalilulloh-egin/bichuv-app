@@ -107,7 +107,7 @@ function App(){
 
   const openBichForm=(p)=>{
     setBichForm({partiya:p.partiya,trimId:selected.id,mahsulot:selected.name,rangi:selected.color,
-      sana:new Date().toISOString().slice(0,10),bichildiKg:"",topBoshi:"",otxod:"",dona:"",partiyaKg:p.partiyaKg});
+      sana:new Date().toISOString().slice(0,10),bichildiKg:"",topBoshi:"",otxod:"",dona:"",partiyaKg:p.partiyaKg,rejaVyxod:""});
     setView("bichish");
   };
 
@@ -210,6 +210,34 @@ function App(){
         </div>
       </div>
 
+      {/* ВЫХОД bo'limi */}
+      <div style={S.card}>
+        <div style={{fontSize:11,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:0.5,marginBottom:10}}>Выход (дона/кг)</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+          <div>
+            <Lbl>Режа</Lbl>
+            <NumInput style={{...S.inp,...S.inpN,borderColor:"#93c5fd",background:"#eff6ff",fontSize:16}} inputMode="decimal"
+              value={bichForm.rejaVyxod} placeholder="0"
+              onChange={e=>setBichForm(p=>({...p,rejaVyxod:e.target.value}))}/>
+          </div>
+          <div style={{textAlign:"center"}}>
+            <Lbl>Факт</Lbl>
+            <div style={{padding:10,background:"#f0fdf4",borderRadius:9,border:"1px solid #86efac"}}>
+              <div style={{fontSize:18,fontWeight:800,color:"#166534"}}>{b>0?(rTotalFakt/b).toFixed(2):"—"}</div>
+            </div>
+          </div>
+          <div style={{textAlign:"center"}}>
+            <Lbl>Фарқ</Lbl>
+            <div style={{padding:10,background:b>0&&(+bichForm.rejaVyxod>0)?((rTotalFakt/b)>=(+bichForm.rejaVyxod)?"#f0fdf4":"#fef2f2"):"#f8fafc",borderRadius:9,border:"1px solid #e2e8f0"}}>
+              <div style={{fontSize:18,fontWeight:800,color:b>0&&(+bichForm.rejaVyxod>0)?((rTotalFakt/b)>=(+bichForm.rejaVyxod)?"#16a34a":"#dc2626"):"#94a3b8"}}>
+                {b>0&&(+bichForm.rejaVyxod>0)?((rTotalFakt/b)-(+bichForm.rejaVyxod)).toFixed(2):"—"}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{fontSize:10,color:"#94a3b8",marginTop:6,textAlign:"center"}}>Факт = Жами дона ({rTotalFakt}) ÷ Бичилди кг ({b||0})</div>
+      </div>
+
       {/* RAZMER bo'limi */}
       {hasReja&&(
         <div style={S.card}>
@@ -259,7 +287,7 @@ function App(){
         const tp=+bichForm.topBoshi||0,ot=+bichForm.otxod||0;
         const autoD=rTotalFakt;
         // Save bichish
-        try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveBichish",...bichForm,bichildiKg:bi,topBoshi:tp,otxod:ot,dona:autoD})});}catch(e){}
+        try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveBichish",...bichForm,bichildiKg:bi,topBoshi:tp,otxod:ot,dona:autoD,rejaVyxod:+bichForm.rejaVyxod||0})});}catch(e){}
         // Save razmer fakt
         if(hasReja){
           try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveFaktRazmer",trimId:selected.id,sizes:activeSizes,fakt})});}catch(e){}

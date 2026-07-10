@@ -93,6 +93,15 @@ function saveBichish(data) {
   // J — yozilmaydi (formula)
   sheet.getRange(newRow, 11).setValue(dona);          // K - Бичилди ДОНА
   
+  // Выход columns
+  const rejaVyxod = Number(data.rejaVyxod) || 0;
+  const faktVyxod = bichildi > 0 ? (dona / bichildi) : 0;
+  const farqVyxod = faktVyxod - rejaVyxod;
+  
+  if (rejaVyxod > 0) sheet.getRange(newRow, 12).setValue(rejaVyxod);   // L - Режа Выход
+  sheet.getRange(newRow, 13).setValue(Math.round(faktVyxod * 100) / 100);  // M - Факт Выход
+  sheet.getRange(newRow, 14).setValue(Math.round(farqVyxod * 100) / 100);  // N - Фарқ Выход
+  
   return { status: 'ok', row: newRow };
 }
 
