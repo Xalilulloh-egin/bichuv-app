@@ -66,7 +66,7 @@ export default function App() {
   const [allData, setAllData] = useState([]);
   const [connected, setConnected] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
-  const [scriptUrl, setScriptUrl] = useState("https://script.google.com/macros/s/AKfycbx3853YD3RCgcl3OMt5jRP_6a0ZfXHNd6VA8ma6r0v65z-gb8IeyH4DFlmdlMSMqePJ/exec");
+  const [scriptUrl, setScriptUrl] = useState("https://script.google.com/macros/s/AKfycbwWmSTnjJ_oAsi9ITCzLw9BTLAqJsT3YQIYX2JzVWGs2IXQ1oWbuqJcHofJQCybcQ5I/exec");
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState("");
