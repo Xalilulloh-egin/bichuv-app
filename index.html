@@ -591,7 +591,19 @@ function App(){
           const isTayyor=(p.holat||'').includes('бичилмаган');
           const isBichilgan=p.bichildiKg>0||(p.holat||'').includes('бичилган');
           return(
-          <div key={i} style={{...S.pCard,borderLeft:`3px solid ${isBichilgan?"#16a34a":isTayyor?"#f59e0b":"#e2e8f0"}`}}>
+          <div key={i} style={{...S.pCard,borderLeft:`3px solid ${isBichilgan?"#16a34a":isTayyor?"#f59e0b":"#e2e8f0"}`,cursor:"pointer"}}
+            onClick={()=>{
+              const trim=allData.find(t=>t.id===p.trimId);
+              if(trim){
+                setSelected(trim);
+                if(trim.sizes){setActiveSizes(trim.sizes.active||[]);setReja(trim.sizes.reja||{});setFakt(trim.sizes.fakt||{});}
+                else{setActiveSizes([]);setReja({});setFakt({});}
+                const rv=trim.sizes?.rejaVyxod||0;
+                setBichForm({partiya:p.partiya,trimId:p.trimId,mahsulot:trim.name,rangi:trim.color,
+                  sana:new Date().toISOString().slice(0,10),bichildiKg:"",topBoshi:"",otxod:"",dona:"",partiyaKg:p.partiyaKg,rejaVyxod:rv});
+                setView("bichish");
+              }
+            }}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
               <div>
                 <span style={{fontWeight:700,color:"#1e40af",fontFamily:"monospace",fontSize:14}}>{p.partiya}</span>
