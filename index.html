@@ -44,7 +44,8 @@ function App(){
   const[hisobotTab,setHisobotTab]=useState("trim");
   const[sortCol,setSortCol]=useState("id");
   const[sortDir,setSortDir]=useState("asc");
-  const[bichForm,setBichForm]=useState(null); // {partiya, trimId, ...}
+  const[bichForm,setBichForm]=useState(null);
+  const[partSearch,setPartSearch]=useState(""); // {partiya, trimId, ...}
 
   const flash=(m)=>{setToast(m);setTimeout(()=>setToast(""),2200);};
 
@@ -569,7 +570,6 @@ function App(){
 
   // ========== PARTIYALAR LIST ==========
   if(tab==="partList"&&connected){
-    const[partSearch,setPartSearch]=useState("");
     const filteredParts=allPartiyalar.filter(p=>{
       if(!partSearch)return true;
       const q=partSearch.toLowerCase();
