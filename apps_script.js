@@ -64,11 +64,11 @@ function saveBichish(data) {
   sheet.getRange(newRow, 1).setValue(sana);          // A - Сана
   sheet.getRange(newRow, 2).setValue(data.partiya);   // B - Партия рақами
   // C, D, E — yozilmaydi (formulalar bor)
-  sheet.getRange(newRow, 7).setValue(bichildi);       // G - Бичилди кг
-  sheet.getRange(newRow, 8).setValue(topBoshi);       // H - Топ боши кг
-  sheet.getRange(newRow, 9).setValue(otxod);          // I - Отход кг
-  // J — yozilmaydi (formula)
-  sheet.getRange(newRow, 11).setValue(dona);          // K - Бичилди ДОНА
+  sheet.getRange(newRow, 6).setValue(bichildi);       // F - Бичилди кг
+  sheet.getRange(newRow, 7).setValue(topBoshi);       // G - Топ боши кг
+  sheet.getRange(newRow, 8).setValue(otxod);          // H - Отход кг
+  // I — Тоза бичилган кг — yozilmaydi (formula)
+  sheet.getRange(newRow, 10).setValue(dona);          // J - Бичилди ДОНА
   
   return { status: 'ok', row: newRow };
 }
