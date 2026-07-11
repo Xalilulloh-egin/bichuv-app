@@ -106,8 +106,9 @@ function App(){
   };
 
   const openBichForm=(p)=>{
+    const rv = selected?.sizes?.rejaVyxod || 0;
     setBichForm({partiya:p.partiya,trimId:selected.id,mahsulot:selected.name,rangi:selected.color,
-      sana:new Date().toISOString().slice(0,10),bichildiKg:"",topBoshi:"",otxod:"",dona:"",partiyaKg:p.partiyaKg,rejaVyxod:""});
+      sana:new Date().toISOString().slice(0,10),bichildiKg:"",topBoshi:"",otxod:"",dona:"",partiyaKg:p.partiyaKg,rejaVyxod:rv});
     setView("bichish");
   };
 
@@ -214,11 +215,12 @@ function App(){
       <div style={S.card}>
         <div style={{fontSize:11,fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:0.5,marginBottom:10}}>Выход (дона/кг)</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-          <div>
+          <div style={{textAlign:"center"}}>
             <Lbl>Режа</Lbl>
-            <NumInput style={{...S.inp,...S.inpN,borderColor:"#93c5fd",background:"#eff6ff",fontSize:16}} inputMode="decimal"
-              value={bichForm.rejaVyxod} placeholder="0"
-              onChange={e=>setBichForm(p=>({...p,rejaVyxod:e.target.value}))}/>
+            <div style={{padding:10,background:"#f8fafc",borderRadius:9,border:"1px solid #e2e8f0"}}>
+              <div style={{fontSize:18,fontWeight:800,color:"#2563eb"}}>{bichForm.rejaVyxod||"—"}</div>
+            </div>
+            <div style={{fontSize:9,color:"#94a3b8",marginTop:2}}>Sheets dan</div>
           </div>
           <div style={{textAlign:"center"}}>
             <Lbl>Факт</Lbl>
@@ -290,7 +292,8 @@ function App(){
         try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveBichish",...bichForm,bichildiKg:bi,topBoshi:tp,otxod:ot,dona:autoD,rejaVyxod:+bichForm.rejaVyxod||0})});}catch(e){}
         // Save razmer fakt
         if(hasReja){
-          try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveFaktRazmer",trimId:selected.id,sizes:activeSizes,fakt})});}catch(e){}
+          const autoFV = bi>0?(autoD/bi):0;
+          try{await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveFaktRazmer",trimId:selected.id,sizes:activeSizes,fakt,faktVyxod:autoFV})});}catch(e){}
           setAllData(prev=>prev.map(t=>{if(t.id!==selected.id)return t;const old=t.sizes||{group:"harf",active:[],reja:{}};return{...t,sizes:{...old,active:activeSizes,fakt}};}));
         }
         setSaving(false);flash("Saqlandi ✓");setBichForm(null);setView("detail");

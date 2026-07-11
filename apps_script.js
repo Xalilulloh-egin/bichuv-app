@@ -17,30 +17,7 @@ function getSizeGroup(razmer) {
 }
 
 // ===== onEdit: SizeGroup → Razmer dropdown =====
-function onEdit(e) {
-  const sheet = e.source.getActiveSheet();
-  const nm = sheet.getName();
-  if (nm !== 'Razmerlar rejasi' && nm !== 'Таблица2') return;
-  const col = e.range.getColumn(), row = e.range.getRow();
-  if (row < 2) return;
-  
-  if (col === 2) { // B=SizeGroup → C=Razmer dropdown
-    const g = String(e.range.getValue()).trim().toLowerCase();
-    let sizes = [];
-    if (g === 'harf' || g === 'харфли') sizes = HARF_SIZES;
-    else if (g === 'son' || g === 'сон') sizes = SON_SIZES;
-    else if (g === 'bola' || g === 'детский' || g === 'болалар') sizes = BOLA_SIZES;
-    if (sizes.length > 0) {
-      sheet.getRange(row, 3).setDataValidation(
-        SpreadsheetApp.newDataValidation().requireValueInList(sizes, true).setAllowInvalid(false).build()
-      ).setValue('');
-    }
-  }
-  if (col === 3) { // C=Razmer → B=SizeGroup avto
-    const razmer = e.range.getValue();
-    if (razmer) sheet.getRange(row, 2).setValue(getSizeGroup(razmer));
-  }
-}
+// onEdit o'chirildi — razmerlar ruchnoy tanlanadi
 
 // ===== HANDLERS =====
 function doGet(e) {
@@ -92,15 +69,6 @@ function saveBichish(data) {
   sheet.getRange(newRow, 9).setValue(otxod);          // I - Отход кг
   // J — yozilmaydi (formula)
   sheet.getRange(newRow, 11).setValue(dona);          // K - Бичилди ДОНА
-  
-  // Выход columns
-  const rejaVyxod = Number(data.rejaVyxod) || 0;
-  const faktVyxod = bichildi > 0 ? (dona / bichildi) : 0;
-  const farqVyxod = faktVyxod - rejaVyxod;
-  
-  if (rejaVyxod > 0) sheet.getRange(newRow, 12).setValue(rejaVyxod);   // L - Режа Выход
-  sheet.getRange(newRow, 13).setValue(Math.round(faktVyxod * 100) / 100);  // M - Факт Выход
-  sheet.getRange(newRow, 14).setValue(Math.round(farqVyxod * 100) / 100);  // N - Фарқ Выход
   
   return { status: 'ok', row: newRow };
 }
@@ -185,7 +153,7 @@ function getAllData() {
     }
   }
 
-  // 3. RAZMERLAR REJASI — A=Trimkarta | B=SizeGroup | C=Razmer | D=Reja soni | E=Fakt soni
+  // 3. RAZMERLAR REJASI — A=Trimkarta | B=SizeGroup | C=Razmer | D=Reja soni | E=Fakt soni | G=Режа Выход
   const rejaSheet = ss.getSheetByName('Razmerlar rejasi') || ss.getSheetByName('Таблица2');
   const rejaMap = {};
   if (rejaSheet) {
@@ -196,12 +164,14 @@ function getAllData() {
       const size = String(rd[i][2]).trim();
       const rejaQty = parseNum(rd[i][3]);           // D - Reja soni
       const faktQty = parseNum(rd[i][4]);            // E - Fakt soni
+      const rejaVyxod = parseNum(rd[i][6]);          // G - Режа Выход
       if (!trimId || !size) continue;
       const sg = group || getSizeGroup(size);
-      if (!rejaMap[trimId]) rejaMap[trimId] = { sizes: [], reja: {}, fakt: {}, sizeGroup: sg };
+      if (!rejaMap[trimId]) rejaMap[trimId] = { sizes: [], reja: {}, fakt: {}, sizeGroup: sg, rejaVyxod: 0 };
       rejaMap[trimId].sizes.push(size);
       rejaMap[trimId].reja[size] = rejaQty;
       rejaMap[trimId].fakt[size] = faktQty;
+      if (rejaVyxod > 0) rejaMap[trimId].rejaVyxod = rejaVyxod; // birinchi topilgan qiymat
     }
   }
 
@@ -210,7 +180,7 @@ function getAllData() {
     const r = rejaMap[t.id];
     let sizes = null;
     if (r) {
-      sizes = { group: r.sizeGroup, active: r.sizes, reja: r.reja, fakt: r.fakt };
+      sizes = { group: r.sizeGroup, active: r.sizes, reja: r.reja, fakt: r.fakt, rejaVyxod: r.rejaVyxod };
     }
     return { ...t, partiyalar: partiyalar[t.id] || [], sizes };
   });
@@ -218,19 +188,38 @@ function getAllData() {
   return { status: 'ok', data: result };
 }
 
-// ===== SAVE FAKT RAZMER — E ustuniga yozish =====
+// ===== SAVE FAKT RAZMER — E ustuniga fakt, H ga Факт Выход, I ga Фарқ Выход =====
 function saveFaktRazmer(data) {
   const ss = SpreadsheetApp.openById(SS_ID);
   const sheet = ss.getSheetByName('Razmerlar rejasi') || ss.getSheetByName('Таблица2');
   if (!sheet) return { status:'error', message:'Razmerlar rejasi topilmadi' };
   
   const rd = sheet.getDataRange().getValues();
+  let rejaVyxod = 0;
+  
   for (let i = 1; i < rd.length; i++) {
     const trimId = String(rd[i][0]).trim();
     const size = String(rd[i][2]).trim();
     if (trimId === data.trimId && size) {
       const faktVal = Number(data.fakt[size]) || 0;
-      sheet.getRange(i + 1, 5).setValue(faktVal); // E ustuni (5-chi ustun)
+      sheet.getRange(i + 1, 5).setValue(faktVal); // E - Fakt soni
+      
+      // G dan Режа Выход o'qish
+      const rv = parseNum(rd[i][6]);
+      if (rv > 0) rejaVyxod = rv;
+    }
+  }
+  
+  // Факт Выход va Фарқ Выход ni birinchi qatorga yozish
+  const faktVyxod = Number(data.faktVyxod) || 0;
+  const farqVyxod = faktVyxod - rejaVyxod;
+  
+  for (let i = 1; i < rd.length; i++) {
+    const trimId = String(rd[i][0]).trim();
+    if (trimId === data.trimId) {
+      sheet.getRange(i + 1, 8).setValue(Math.round(faktVyxod * 100) / 100);  // H - Факт Выход
+      sheet.getRange(i + 1, 9).setValue(Math.round(farqVyxod * 100) / 100);  // I - Фарқ Выход
+      break; // faqat birinchi qatorga
     }
   }
   
